@@ -1,17 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-
-type Trip = {
-  slug: string;
-  name: string;
-  time: string;
-  lat: number;
-  lng: number;
-};
+import type { Destination } from "@/data/destinations";
 
 type MapWrapperProps = {
-  points: Trip[];
+  points: Destination[];
+  selectedSlug?: string;
   onSelect?: (slug: string) => void;
 };
 
@@ -19,6 +13,16 @@ const MockupMap = dynamic(() => import("@/components/MockupMap"), {
   ssr: false,
 });
 
-export default function MapWrapper({ points, onSelect }: MapWrapperProps) {
-  return <MockupMap points={points} onSelect={onSelect} />;
+export default function MapWrapper({
+  points,
+  selectedSlug,
+  onSelect,
+}: MapWrapperProps) {
+  return (
+    <MockupMap
+      points={points}
+      selectedSlug={selectedSlug}
+      onSelect={onSelect}
+    />
+  );
 }

@@ -4,17 +4,11 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, Polyline } from "react-leaflet";
-
-type Trip = {
-  slug: string;
-  name: string;
-  time: string;
-  lat: number;
-  lng: number;
-};
+import type { Destination } from "@/data/destinations";
 
 type MockupMapProps = {
-  points: Trip[];
+  points: Destination[];
+  selectedSlug?: string;
   onSelect?: (slug: string) => void;
 };
 
@@ -22,7 +16,8 @@ const berlin: [number, number] = [52.5251, 13.3694];
 
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -30,9 +25,13 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-export default function MockupMap({ points, onSelect }: MockupMapProps) {
+export default function MockupMap({
+  points,
+  selectedSlug,
+  onSelect,
+}: MockupMapProps) {
   return (
-    <div className="h-[780px] w-full">
+    <div className="h-[640px] w-full">
       <MapContainer
         center={[52.5, 13.2]}
         zoom={7}
@@ -48,7 +47,7 @@ export default function MockupMap({ points, onSelect }: MockupMapProps) {
           <Popup>Berlin Hbf</Popup>
         </Marker>
 
-        {points.map((point, index) => (
+        {points.map((point) => (
           <Marker
             key={point.slug}
             position={[point.lat, point.lng]}
@@ -73,8 +72,14 @@ export default function MockupMap({ points, onSelect }: MockupMapProps) {
               [point.lat, point.lng],
             ]}
             pathOptions={{
-              color: index % 2 === 0 ? "#0B3B82" : "#FF8A1F",
-              weight: 4,
+              color:
+                point.slug === selectedSlug
+                  ? "#FF8A1F"
+                  : index % 2 === 0
+                    ? "#0B3B82"
+                    : "#7C93B8",
+              weight: point.slug === selectedSlug ? 6 : 3,
+              opacity: point.slug === selectedSlug ? 0.95 : 0.45,
             }}
           />
         ))}
