@@ -10,10 +10,15 @@ type Trip = {
   lng: number;
 };
 
+type MapWrapperProps = {
+  points: Trip[];
+  onSelect?: (slug: string) => void;
+};
+
 const MockupMap = dynamic(() => import("@/components/MockupMap"), {
   ssr: false,
 });
 
-export default function MapWrapper({ points }: { points: Trip[] }) {
-  return <MockupMap points={points} />;
+export default function MapWrapper({ points, onSelect }: MapWrapperProps) {
+  return <MockupMap points={points} onSelect={onSelect} />;
 }

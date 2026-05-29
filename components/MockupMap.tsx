@@ -15,6 +15,7 @@ type Trip = {
 
 type MockupMapProps = {
   points: Trip[];
+  onSelect?: (slug: string) => void;
 };
 
 const berlin: [number, number] = [52.5251, 13.3694];
@@ -29,7 +30,7 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-export default function MockupMap({ points }: MockupMapProps) {
+export default function MockupMap({ points, onSelect }: MockupMapProps) {
   return (
     <div className="h-[780px] w-full">
       <MapContainer
@@ -48,26 +49,34 @@ export default function MockupMap({ points }: MockupMapProps) {
         </Marker>
 
         {points.map((point, index) => (
-          <div key={point.slug}>
-            <Marker position={[point.lat, point.lng]} icon={markerIcon}>
-              <Popup>
-                <strong>{point.name}</strong>
-                <br />
-                {point.time} from Berlin
-              </Popup>
-            </Marker>
+          <Marker
+            key={point.slug}
+            position={[point.lat, point.lng]}
+            icon={markerIcon}
+            eventHandlers={{
+              click: () => onSelect?.(point.slug),
+            }}
+          >
+            <Popup>
+              <strong>{point.name}</strong>
+              <br />
+              {point.time} from Berlin
+            </Popup>
+          </Marker>
+        ))}
 
-            <Polyline
-              positions={[
-                berlin,
-                [point.lat, point.lng],
-              ]}
-              pathOptions={{
-                color: index % 2 === 0 ? "#0B3B82" : "#FF8A1F",
-                weight: 4,
-              }}
-            />
-          </div>
+        {points.map((point, index) => (
+          <Polyline
+            key={`${point.slug}-line`}
+            positions={[
+              berlin,
+              [point.lat, point.lng],
+            ]}
+            pathOptions={{
+              color: index % 2 === 0 ? "#0B3B82" : "#FF8A1F",
+              weight: 4,
+            }}
+          />
         ))}
       </MapContainer>
     </div>
