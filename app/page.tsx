@@ -1,8 +1,4 @@
-import dynamic from "next/dynamic";
-
-const MockupMap = dynamic(() => import("@/components/MockupMap"), {
-  ssr: false,
-});
+import MapWrapper from "@/components/MapWrapper";
 
 const trips = [
   { slug: "schwerin", name: "Schwerin", time: "3h 45m", lat: 53.6355, lng: 11.4012 },
@@ -55,8 +51,8 @@ export default function Home() {
             </div>
           </aside>
 
-          <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm">
-            <MockupMap points={trips} />
+          <section className="overflow-hidden rounded-[2rem] border border-[#DDE6F3] bg-white shadow-sm">
+            <MapWrapper points={trips} />
           </section>
         </div>
       </section>
