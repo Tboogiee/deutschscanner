@@ -1,10 +1,11 @@
 "use client";
 
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-type Point = {
+import L from "leaflet";
+import { MapContainer, Marker, Popup, TileLayer, Polyline } from "react-leaflet";
+
+type Trip = {
   slug: string;
   name: string;
   time: string;
@@ -12,45 +13,63 @@ type Point = {
   lng: number;
 };
 
-const icon = new L.Icon({
+type MockupMapProps = {
+  points: Trip[];
+};
+
+const berlin: [number, number] = [52.5251, 13.3694];
+
+const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
-export default function MockupMap({
-  points,
-  onSelect,
-}: {
-  points: Point[];
-  onSelect: (slug: string) => void;
-}) {
+export default function MockupMap({ points }: MockupMapProps) {
   return (
-    <MapContainer
-      center={[52.7, 12.9]}
-      zoom={7}
-      scrollWheelZoom
-      className="h-[780px] w-full"
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="h-[780px] w-full">
+      <MapContainer
+        center={[52.5, 13.2]}
+        zoom={7}
+        scrollWheelZoom={false}
+        className="h-full w-full"
+      >
+        <TileLayer
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-      {points.map((point) => (
-        <Marker
-          key={point.slug}
-          position={[point.lat, point.lng]}
-          icon={icon}
-          eventHandlers={{ click: () => onSelect(point.slug) }}
-        >
-          <Popup>
-            <strong>{point.name}</strong>
-            <p>{point.time} from Berlin</p>
-          </Popup>
+        <Marker position={berlin} icon={markerIcon}>
+          <Popup>Berlin Hbf</Popup>
         </Marker>
-      ))}
-    </MapContainer>
+
+        {points.map((point, index) => (
+          <div key={point.slug}>
+            <Marker position={[point.lat, point.lng]} icon={markerIcon}>
+              <Popup>
+                <strong>{point.name}</strong>
+                <br />
+                {point.time} from Berlin
+              </Popup>
+            </Marker>
+
+            <Polyline
+              positions={[
+                berlin,
+                [point.lat, point.lng],
+              ]}
+              pathOptions={{
+                color: index % 2 === 0 ? "#0B3B82" : "#FF8A1F",
+                weight: 4,
+              }}
+            />
+          </div>
+        ))}
+      </MapContainer>
+    </div>
   );
 }
