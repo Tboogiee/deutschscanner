@@ -44,11 +44,6 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function formatDateForDb(date: string) {
-  const [year, month, day] = date.split("-");
-  return `${day}.${month}.${year.slice(2)}`;
-}
-
 function lineBadgeClass(type: TrainRouteStep["type"]) {
   switch (type) {
     case "S":
@@ -75,6 +70,12 @@ function getBestDestinationStation(destination: DestinationWithOptionalRoute) {
     return lastRouteStep.to;
   }
 
+  if (destination.name === "Potsdam") return "Potsdam Hbf";
+  if (destination.name === "Rostock") return "Rostock Hbf";
+  if (destination.name === "Dresden") return "Dresden Hbf";
+  if (destination.name === "Leipzig") return "Leipzig Hbf";
+  if (destination.name === "Schwerin") return "Schwerin Hbf";
+
   return destination.name;
 }
 
@@ -85,17 +86,34 @@ function buildDbUrl(
   timeMode: string,
 ) {
   const destinationStation = getBestDestinationStation(destination);
+  const ar = timeMode === "arrive" ? "true" : "false";
 
-  const params = new URLSearchParams();
+  const hashParams = new URLSearchParams();
 
-  params.set("S", "Berlin Hbf");
-  params.set("Z", destinationStation);
-  params.set("date", formatDateForDb(date));
-  params.set("time", time);
-  params.set("timesel", timeMode === "arrive" ? "arrive" : "depart");
-  params.set("start", "1");
+  hashParams.set("soid", `O=Berlin Hbf`);
+  hashParams.set("zoid", `O=${destinationStation}`);
+  hashParams.set("so", "Berlin Hbf");
+  hashParams.set("zo", destinationStation);
+  hashParams.set("hd", `${date}T${time}:00`);
+  hashParams.set("ar", ar);
+  hashParams.set("s", "true");
+  hashParams.set("d", "false");
+  hashParams.set("kl", "2");
 
-  return `https://reiseauskunft.bahn.de/bin/query.exe/dn?${params.toString()}`;
+  return `https://www.bahn.de/buchung/fahrplan/suche#${hashParams.toString()}`;
+}
+
+function getFallbackRoute(destination: DestinationWithOptionalRoute): TrainRouteStep[] {
+  return [
+    {
+      type: "RE",
+      line: "Regional",
+      from: "Berlin Hbf",
+      to: getBestDestinationStation(destination),
+      duration: destination.time,
+      note: "Exact RE/RB/S-Bahn line depends on the selected date and time. Open DB to confirm live departures.",
+    },
+  ];
 }
 
 export default function HomeClient() {
@@ -106,7 +124,7 @@ export default function HomeClient() {
   const [selectedSlug, setSelectedSlug] = useState(destinations[0].slug);
 
   const [travelDate, setTravelDate] = useState(todayISO());
-  const [travelTime, setTravelTime] = useState("09:00");
+  const [travelTime, setTravelTime] = useState("10:00");
   const [timeMode, setTimeMode] = useState("depart");
 
   const filteredDestinations = useMemo(() => {
@@ -134,14 +152,12 @@ export default function HomeClient() {
       filteredDestinations[0] ??
       destinations[0]) as DestinationWithOptionalRoute;
 
-  const routePreview = selectedDestination.route ?? [];
+  const routePreview =
+    selectedDestination.route && selectedDestination.route.length > 0
+      ? selectedDestination.route
+      : getFallbackRoute(selectedDestination);
 
-  const dbUrl = buildDbUrl(
-    selectedDestination,
-    travelDate,
-    travelTime,
-    timeMode,
-  );
+  const dbUrl = buildDbUrl(selectedDestination, travelDate, travelTime, timeMode);
 
   function handleSelect(destination: Destination) {
     setSelectedSlug(destination.slug);
@@ -297,73 +313,45 @@ export default function HomeClient() {
                 </span>
               </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                  <p className="text-sm text-[#5f6b85]">Date</p>
-                  <p className="font-bold text-[#0B3B82]">{travelDate}</p>
-                </div>
-
-                <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                  <p className="text-sm text-[#5f6b85]">Time</p>
-                  <p className="font-bold text-[#0B3B82]">{travelTime}</p>
-                </div>
-
-                <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                  <p className="text-sm text-[#5f6b85]">Search mode</p>
-                  <p className="font-bold text-[#0B3B82]">
-                    {timeMode === "depart" ? "Depart at" : "Arrive by"}
-                  </p>
-                </div>
-              </div>
-
               <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
                 <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
                   Train route preview
                 </h3>
 
-                {routePreview.length > 0 ? (
-                  <div className="space-y-3">
-                    {routePreview.map((step, index) => (
-                      <div
-                        key={`${step.line}-${index}`}
-                        className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
-                      >
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span
-                            className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
-                              step.type,
-                            )}`}
-                          >
-                            {step.type}
-                          </span>
+                <div className="space-y-3">
+                  {routePreview.map((step, index) => (
+                    <div
+                      key={`${step.line}-${index}`}
+                      className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
+                    >
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span
+                          className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
+                            step.type,
+                          )}`}
+                        >
+                          {step.type}
+                        </span>
 
-                          <span className="font-black text-[#0B3B82]">
-                            {step.line}
-                          </span>
+                        <span className="font-black text-[#0B3B82]">
+                          {step.line}
+                        </span>
 
-                          <span className="text-sm font-semibold text-[#FF8A1F]">
-                            {step.duration}
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-sm text-[#5f6b85]">
-                          {step.from} → {step.to}
-                        </p>
-
-                        {step.note && (
-                          <p className="mt-1 text-xs text-[#7C879B]">
-                            {step.note}
-                          </p>
-                        )}
+                        <span className="text-sm font-semibold text-[#FF8A1F]">
+                          {step.duration}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#5f6b85]">
-                    Route details will appear here once route steps are added to the
-                    destination database.
-                  </p>
-                )}
+
+                      <p className="mt-2 text-sm text-[#5f6b85]">
+                        {step.from} → {step.to}
+                      </p>
+
+                      {step.note && (
+                        <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 <a
                   href={dbUrl}
@@ -378,10 +366,9 @@ export default function HomeClient() {
                 </a>
 
                 <p className="mt-3 text-xs text-[#7C879B]">
-                  Opens a DB timetable search from Berlin Hbf to{" "}
-                  {getBestDestinationStation(selectedDestination)} on your selected
-                  date and time. If DB changes its public URL handling, use the DB
-                  form or DB Navigator to confirm the final route.
+                  Opens DB’s newer timetable search with Berlin Hbf,{" "}
+                  {getBestDestinationStation(selectedDestination)}, {travelDate}, and{" "}
+                  {travelTime}. DB may still require confirmation for ambiguous stations.
                 </p>
               </div>
             </div>
