@@ -44,6 +44,11 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatDateForDb(date: string) {
+  const [year, month, day] = date.split("-");
+  return `${day}.${month}.${year.slice(2)}`;
+}
+
 function lineBadgeClass(type: TrainRouteStep["type"]) {
   switch (type) {
     case "S":
@@ -63,21 +68,34 @@ function lineBadgeClass(type: TrainRouteStep["type"]) {
   }
 }
 
+function getBestDestinationStation(destination: DestinationWithOptionalRoute) {
+  const lastRouteStep = destination.route?.[destination.route.length - 1];
+
+  if (lastRouteStep?.to) {
+    return lastRouteStep.to;
+  }
+
+  return destination.name;
+}
+
 function buildDbUrl(
-  destinationName: string,
+  destination: DestinationWithOptionalRoute,
   date: string,
   time: string,
   timeMode: string,
 ) {
+  const destinationStation = getBestDestinationStation(destination);
+
   const params = new URLSearchParams();
 
   params.set("S", "Berlin Hbf");
-  params.set("Z", destinationName);
-  params.set("date", date);
+  params.set("Z", destinationStation);
+  params.set("date", formatDateForDb(date));
   params.set("time", time);
-  params.set("timesel", timeMode);
+  params.set("timesel", timeMode === "arrive" ? "arrive" : "depart");
+  params.set("start", "1");
 
-  return `https://www.bahn.de/buchung/start?${params.toString()}`;
+  return `https://reiseauskunft.bahn.de/bin/query.exe/dn?${params.toString()}`;
 }
 
 export default function HomeClient() {
@@ -119,7 +137,7 @@ export default function HomeClient() {
   const routePreview = selectedDestination.route ?? [];
 
   const dbUrl = buildDbUrl(
-    selectedDestination.name,
+    selectedDestination,
     travelDate,
     travelTime,
     timeMode,
@@ -356,12 +374,14 @@ export default function HomeClient() {
                   <span className="rounded bg-red-600 px-2 py-1 font-black text-white">
                     DB
                   </span>
-                  Open timetable on bahn.de
+                  Search timetable on bahn.de
                 </a>
 
                 <p className="mt-3 text-xs text-[#7C879B]">
-                  Opens DB with Berlin Hbf, your selected destination, date, and time.
-                  Use DB’s Deutschlandticket filter to show only valid regional options.
+                  Opens a DB timetable search from Berlin Hbf to{" "}
+                  {getBestDestinationStation(selectedDestination)} on your selected
+                  date and time. If DB changes its public URL handling, use the DB
+                  form or DB Navigator to confirm the final route.
                 </p>
               </div>
             </div>
