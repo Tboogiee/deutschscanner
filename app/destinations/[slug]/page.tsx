@@ -1,11 +1,30 @@
 import Link from "next/link";
-import { destinations } from "@/data/destinations";
+import { destinations, type TrainRouteStep } from "@/data/destinations";
 
 type DestinationPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
+
+function lineBadgeClass(type: TrainRouteStep["type"]) {
+  switch (type) {
+    case "S":
+      return "bg-green-600 text-white";
+    case "U":
+      return "bg-blue-700 text-white";
+    case "RE":
+      return "bg-red-600 text-white";
+    case "RB":
+      return "bg-orange-500 text-white";
+    case "Bus":
+      return "bg-purple-600 text-white";
+    case "Tram":
+      return "bg-pink-600 text-white";
+    default:
+      return "bg-slate-700 text-white";
+  }
+}
 
 export default async function DestinationPage({ params }: DestinationPageProps) {
   const { slug } = await params;
@@ -72,8 +91,42 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
         </div>
 
         <section className="mt-6 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-6">
-          <h2 className="text-2xl font-bold text-[#0B3B82]">Route preview</h2>
-          <p className="mt-3 text-[#5f6b85]">{destination.trainHint}</p>
+          <h2 className="text-2xl font-bold text-[#0B3B82]">
+            Train route preview
+          </h2>
+
+          <div className="mt-4 space-y-3">
+            {destination.route.map((step, index) => (
+              <div
+                key={`${step.line}-${index}`}
+                className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <span
+                    className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
+                      step.type,
+                    )}`}
+                  >
+                    {step.type}
+                  </span>
+
+                  <span className="font-black text-[#0B3B82]">{step.line}</span>
+
+                  <span className="text-sm font-semibold text-[#FF8A1F]">
+                    {step.duration}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm text-[#5f6b85]">
+                  {step.from} → {step.to}
+                </p>
+
+                {step.note && (
+                  <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </main>

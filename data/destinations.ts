@@ -1,3 +1,12 @@
+export type TrainRouteStep = {
+  type: "S" | "U" | "RE" | "RB" | "Bus" | "Tram";
+  line: string;
+  from: string;
+  to: string;
+  duration: string;
+  note?: string;
+};
+
 export type Destination = {
   slug: string;
   name: string;
@@ -12,6 +21,7 @@ export type Destination = {
   lng: number;
   trainHint: string;
   image?: string;
+  route: TrainRouteStep[];
 };
 
 export const destinations: Destination[] = [
@@ -29,6 +39,24 @@ export const destinations: Destination[] = [
     lng: 13.0645,
     trainHint: "Use regional trains or S-Bahn connections from Berlin toward Potsdam.",
     image: "/destinations/potsdam.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE1",
+        from: "Berlin Hbf",
+        to: "Potsdam Hbf",
+        duration: "35 min",
+        note: "Fast regional option. Check DB Navigator for exact live departures.",
+      },
+      {
+        type: "S",
+        line: "S7",
+        from: "Berlin city center",
+        to: "Potsdam Hbf",
+        duration: "45-55 min",
+        note: "Slower but frequent S-Bahn option.",
+      },
+    ],
   },
   {
     slug: "oranienburg",
@@ -44,6 +72,16 @@ export const destinations: Destination[] = [
     lng: 13.2367,
     trainHint: "Take S-Bahn or regional services north from Berlin.",
     image: "/destinations/oranienburg.jpg",
+    route: [
+      {
+        type: "S",
+        line: "S1",
+        from: "Berlin city center",
+        to: "Oranienburg",
+        duration: "35-50 min",
+        note: "Frequent direct S-Bahn connection.",
+      },
+    ],
   },
   {
     slug: "werder-havel",
@@ -59,6 +97,16 @@ export const destinations: Destination[] = [
     lng: 12.934,
     trainHint: "Travel from Berlin toward Werder via regional rail.",
     image: "/destinations/werder.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE1",
+        from: "Berlin Hbf",
+        to: "Werder (Havel)",
+        duration: "45 min",
+        note: "Direct regional option on many connections.",
+      },
+    ],
   },
   {
     slug: "brandenburg-havel",
@@ -74,6 +122,16 @@ export const destinations: Destination[] = [
     lng: 12.5316,
     trainHint: "Regional trains connect Berlin with Brandenburg an der Havel.",
     image: "/destinations/brandenburg-havel.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE1",
+        from: "Berlin Hbf",
+        to: "Brandenburg Hbf",
+        duration: "55-65 min",
+        note: "Direct regional route toward Magdeburg/Brandenburg.",
+      },
+    ],
   },
   {
     slug: "beelitz-heilstaetten",
@@ -89,6 +147,16 @@ export const destinations: Destination[] = [
     lng: 12.9167,
     trainHint: "Use regional rail toward Beelitz-Heilstätten.",
     image: "/destinations/beelitz.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE7",
+        from: "Berlin Hbf",
+        to: "Beelitz-Heilstätten",
+        duration: "45-55 min",
+        note: "Regional route south-west from Berlin.",
+      },
+    ],
   },
   {
     slug: "bad-belzig",
@@ -104,6 +172,16 @@ export const destinations: Destination[] = [
     lng: 12.5927,
     trainHint: "Regional trains from Berlin run toward Bad Belzig.",
     image: "/destinations/bad-belzig.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE7",
+        from: "Berlin Hbf",
+        to: "Bad Belzig",
+        duration: "1h 10m",
+        note: "Direct regional connection on many departures.",
+      },
+    ],
   },
   {
     slug: "bad-saarow",
@@ -119,6 +197,24 @@ export const destinations: Destination[] = [
     lng: 14.0667,
     trainHint: "Travel by regional train toward Fürstenwalde, then local connection.",
     image: "/destinations/bad-saarow.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE1",
+        from: "Berlin Hbf",
+        to: "Fürstenwalde (Spree)",
+        duration: "45 min",
+        note: "First regional leg east from Berlin.",
+      },
+      {
+        type: "RB",
+        line: "RB35",
+        from: "Fürstenwalde (Spree)",
+        to: "Bad Saarow",
+        duration: "25-30 min",
+        note: "Local connection toward the lake area.",
+      },
+    ],
   },
   {
     slug: "frankfurt-oder",
@@ -134,6 +230,16 @@ export const destinations: Destination[] = [
     lng: 14.5506,
     trainHint: "Regional trains run east from Berlin to Frankfurt (Oder).",
     image: "/destinations/frankfurt-oder.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE1",
+        from: "Berlin Hbf",
+        to: "Frankfurt (Oder)",
+        duration: "1h 10m",
+        note: "Direct regional service east from Berlin.",
+      },
+    ],
   },
   {
     slug: "eberswalde",
@@ -149,6 +255,16 @@ export const destinations: Destination[] = [
     lng: 13.8195,
     trainHint: "Regional trains connect Berlin directly with Eberswalde.",
     image: "/destinations/eberswalde.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Eberswalde Hbf",
+        duration: "35-45 min",
+        note: "Fast regional route north-east from Berlin.",
+      },
+    ],
   },
   {
     slug: "chorin",
@@ -164,6 +280,16 @@ export const destinations: Destination[] = [
     lng: 13.8667,
     trainHint: "Use regional trains north from Berlin toward Chorin.",
     image: "/destinations/chorin.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Chorin",
+        duration: "55-65 min",
+        note: "Regional route north of Eberswalde.",
+      },
+    ],
   },
   {
     slug: "angermuende",
@@ -179,6 +305,16 @@ export const destinations: Destination[] = [
     lng: 13.9996,
     trainHint: "Regional trains run from Berlin toward Angermünde.",
     image: "/destinations/angermuende.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Angermünde",
+        duration: "1h 05m",
+        note: "Useful gateway for the Uckermark region.",
+      },
+    ],
   },
   {
     slug: "templin",
@@ -194,6 +330,24 @@ export const destinations: Destination[] = [
     lng: 13.5022,
     trainHint: "Travel north from Berlin with a regional transfer toward Templin.",
     image: "/destinations/templin.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Eberswalde Hbf",
+        duration: "35-45 min",
+        note: "First leg north-east from Berlin.",
+      },
+      {
+        type: "RB",
+        line: "RB63",
+        from: "Eberswalde Hbf",
+        to: "Templin Stadt",
+        duration: "1h",
+        note: "Regional branch line into the Uckermark.",
+      },
+    ],
   },
   {
     slug: "neustrelitz",
@@ -209,6 +363,16 @@ export const destinations: Destination[] = [
     lng: 13.0639,
     trainHint: "Regional trains connect Berlin with Neustrelitz.",
     image: "/destinations/neustrelitz.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE5",
+        from: "Berlin Hbf",
+        to: "Neustrelitz Hbf",
+        duration: "1h 15m",
+        note: "Regional route north toward Mecklenburg lake country.",
+      },
+    ],
   },
   {
     slug: "waren-mueritz",
@@ -224,21 +388,16 @@ export const destinations: Destination[] = [
     lng: 12.6833,
     trainHint: "Regional connections from Berlin reach Waren with direct or simple transfers.",
     image: "/destinations/waren.jpg",
-  },
-  {
-    slug: "rheinsberg",
-    name: "Rheinsberg",
-    state: "Brandenburg",
-    summary: "Castle, lake scenery, boats, and quiet weekend-trip atmosphere.",
-    categories: ["Lakes", "Architecture", "History", "Nature"],
-    tripTypes: ["Day Trip", "Weekend Trip"],
-    durationMin: 135,
-    time: "2h 15m",
-    transfers: "1",
-    lat: 53.0997,
-    lng: 12.8989,
-    trainHint: "Use regional rail north from Berlin with a local transfer.",
-    image: "/destinations/rheinsberg.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE5",
+        from: "Berlin Hbf",
+        to: "Waren (Müritz)",
+        duration: "1h 45m",
+        note: "Regional lake-country route. Check current service pattern.",
+      },
+    ],
   },
   {
     slug: "luebbenau",
@@ -254,6 +413,16 @@ export const destinations: Destination[] = [
     lng: 13.9667,
     trainHint: "Regional trains connect Berlin with Lübbenau in the Spreewald.",
     image: "/destinations/luebbenau.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE2",
+        from: "Berlin Hbf",
+        to: "Lübbenau (Spreewald)",
+        duration: "1h 15m",
+        note: "Direct regional connection toward the Spreewald.",
+      },
+    ],
   },
   {
     slug: "luebben",
@@ -269,6 +438,16 @@ export const destinations: Destination[] = [
     lng: 13.8889,
     trainHint: "Regional trains from Berlin run toward Lübben.",
     image: "/destinations/luebben.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE2",
+        from: "Berlin Hbf",
+        to: "Lübben (Spreewald)",
+        duration: "1h 05m",
+        note: "Direct regional route toward Cottbus.",
+      },
+    ],
   },
   {
     slug: "cottbus",
@@ -284,21 +463,16 @@ export const destinations: Destination[] = [
     lng: 14.3329,
     trainHint: "Regional trains connect Berlin directly with Cottbus.",
     image: "/destinations/cottbus.jpg",
-  },
-  {
-    slug: "senftenberg",
-    name: "Senftenberg",
-    state: "Brandenburg",
-    summary: "Lake district energy, beaches, cycling, and summer swimming options.",
-    categories: ["Lakes", "Nature"],
-    tripTypes: ["Day Trip", "Weekend Trip"],
-    durationMin: 125,
-    time: "2h 05m",
-    transfers: "1",
-    lat: 51.5167,
-    lng: 14.0,
-    trainHint: "Regional rail south from Berlin with a transfer toward Senftenberg.",
-    image: "/destinations/senftenberg.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE2",
+        from: "Berlin Hbf",
+        to: "Cottbus Hbf",
+        duration: "1h 25m",
+        note: "Direct regional connection to southern Brandenburg.",
+      },
+    ],
   },
   {
     slug: "wittenberg",
@@ -314,6 +488,16 @@ export const destinations: Destination[] = [
     lng: 12.65,
     trainHint: "Use regional connections from Berlin toward Wittenberg.",
     image: "/destinations/wittenberg.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Lutherstadt Wittenberg Hbf",
+        duration: "1h 35m",
+        note: "Regional route south-west. Check current departures.",
+      },
+    ],
   },
   {
     slug: "dessau",
@@ -329,6 +513,24 @@ export const destinations: Destination[] = [
     lng: 12.2333,
     trainHint: "Regional trains from Berlin connect toward Dessau with a transfer.",
     image: "/destinations/dessau.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Lutherstadt Wittenberg Hbf",
+        duration: "1h 35m",
+        note: "First regional leg.",
+      },
+      {
+        type: "RB",
+        line: "RB51",
+        from: "Lutherstadt Wittenberg Hbf",
+        to: "Dessau Hbf",
+        duration: "30-40 min",
+        note: "Regional connection onward to Dessau.",
+      },
+    ],
   },
   {
     slug: "magdeburg",
@@ -344,6 +546,16 @@ export const destinations: Destination[] = [
     lng: 11.6276,
     trainHint: "Regional connections link Berlin and Magdeburg.",
     image: "/destinations/magdeburg.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE1",
+        from: "Berlin Hbf",
+        to: "Magdeburg Hbf",
+        duration: "2h",
+        note: "Regional route west. Verify current timetable before travel.",
+      },
+    ],
   },
   {
     slug: "leipzig",
@@ -359,6 +571,24 @@ export const destinations: Destination[] = [
     lng: 12.3731,
     trainHint: "Use regional-only routing if traveling with the Deutschlandticket.",
     image: "/destinations/leipzig.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Lutherstadt Wittenberg Hbf",
+        duration: "1h 35m",
+        note: "First regional leg south-west.",
+      },
+      {
+        type: "S",
+        line: "S2/S8",
+        from: "Regional transfer",
+        to: "Leipzig Hbf",
+        duration: "1h+",
+        note: "Exact regional-only route varies by departure.",
+      },
+    ],
   },
   {
     slug: "dresden",
@@ -374,6 +604,24 @@ export const destinations: Destination[] = [
     lng: 13.7373,
     trainHint: "Choose regional-only routing to stay within Deutschlandticket validity.",
     image: "/destinations/dresden.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE2/RE7",
+        from: "Berlin Hbf",
+        to: "Regional transfer",
+        duration: "Varies",
+        note: "Regional-only routes usually require transfers.",
+      },
+      {
+        type: "RE",
+        line: "RE",
+        from: "Regional transfer",
+        to: "Dresden Hbf",
+        duration: "Varies",
+        note: "Check exact live route in DB Navigator.",
+      },
+    ],
   },
   {
     slug: "wittenberge",
@@ -389,6 +637,16 @@ export const destinations: Destination[] = [
     lng: 11.75,
     trainHint: "Regional trains run northwest from Berlin toward Wittenberge.",
     image: "/destinations/wittenberge.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE8",
+        from: "Berlin Hbf",
+        to: "Wittenberge",
+        duration: "1h 35m",
+        note: "Regional route northwest from Berlin.",
+      },
+    ],
   },
   {
     slug: "rathenow",
@@ -404,6 +662,16 @@ export const destinations: Destination[] = [
     lng: 12.3367,
     trainHint: "Regional rail connects Berlin with Rathenow.",
     image: "/destinations/rathenow.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE4",
+        from: "Berlin Hbf",
+        to: "Rathenow",
+        duration: "1h 15m",
+        note: "Direct regional option west from Berlin.",
+      },
+    ],
   },
   {
     slug: "neuruppin",
@@ -419,21 +687,16 @@ export const destinations: Destination[] = [
     lng: 12.8031,
     trainHint: "Regional train connections from Berlin reach Neuruppin with a transfer.",
     image: "/destinations/neuruppin.jpg",
-  },
-  {
-    slug: "wustermark",
-    name: "Wustermark",
-    state: "Brandenburg",
-    summary: "A quick western escape with outlet shopping and nearby nature options.",
-    categories: ["City", "Nature"],
-    tripTypes: ["Half-Day"],
-    durationMin: 35,
-    time: "35 min",
-    transfers: "Direct",
-    lat: 52.55,
-    lng: 12.95,
-    trainHint: "Regional trains from Berlin stop at Wustermark.",
-    image: "/destinations/wustermark.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE6",
+        from: "Berlin Gesundbrunnen",
+        to: "Neuruppin Rheinsberger Tor",
+        duration: "1h 20m",
+        note: "Regional route toward Prignitz/Ruppiner Land.",
+      },
+    ],
   },
   {
     slug: "koenigs-wusterhausen",
@@ -449,6 +712,24 @@ export const destinations: Destination[] = [
     lng: 13.6333,
     trainHint: "S-Bahn and regional services connect Berlin with Königs Wusterhausen.",
     image: "/destinations/koenigs-wusterhausen.jpg",
+    route: [
+      {
+        type: "S",
+        line: "S46",
+        from: "Berlin city rail",
+        to: "Königs Wusterhausen",
+        duration: "35-55 min",
+        note: "S-Bahn option depending on start station.",
+      },
+      {
+        type: "RE",
+        line: "RE2/RE7",
+        from: "Berlin Hbf",
+        to: "Königs Wusterhausen",
+        duration: "30-40 min",
+        note: "Regional options vary by departure.",
+      },
+    ],
   },
   {
     slug: "wunsdorf-waldstadt",
@@ -464,21 +745,16 @@ export const destinations: Destination[] = [
     lng: 13.4667,
     trainHint: "Regional trains south from Berlin reach Wünsdorf-Waldstadt.",
     image: "/destinations/wuensdorf.jpg",
-  },
-  {
-    slug: "tropical-islands",
-    name: "Tropical Islands",
-    state: "Brandenburg",
-    summary: "Indoor tropical resort near Brand Tropical Islands station.",
-    categories: ["Wellness", "Nature"],
-    tripTypes: ["Day Trip", "Weekend Trip"],
-    durationMin: 70,
-    time: "1h 10m",
-    transfers: "Direct or 1",
-    lat: 52.038,
-    lng: 13.748,
-    trainHint: "Travel toward Brand Tropical Islands station, then use local shuttle options.",
-    image: "/destinations/tropical-islands.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE5/RE7",
+        from: "Berlin Hbf",
+        to: "Wünsdorf-Waldstadt",
+        duration: "45 min",
+        note: "Regional route south from Berlin.",
+      },
+    ],
   },
   {
     slug: "schwerin",
@@ -494,6 +770,24 @@ export const destinations: Destination[] = [
     lng: 11.4012,
     trainHint: "Use regional-only routing to stay within Deutschlandticket validity.",
     image: "/destinations/schwerin.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE8",
+        from: "Berlin Hbf",
+        to: "Wittenberge",
+        duration: "1h 35m",
+        note: "First regional leg northwest.",
+      },
+      {
+        type: "RE",
+        line: "RE",
+        from: "Wittenberge / Ludwigslust area",
+        to: "Schwerin Hbf",
+        duration: "2h+",
+        note: "Exact regional-only transfer varies by departure.",
+      },
+    ],
   },
   {
     slug: "rostock",
@@ -509,6 +803,16 @@ export const destinations: Destination[] = [
     lng: 12.0991,
     trainHint: "Regional connections from Berlin can reach Rostock; check current routing.",
     image: "/destinations/rostock.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE5",
+        from: "Berlin Hbf",
+        to: "Rostock Hbf",
+        duration: "2h 40m",
+        note: "Regional route north. Confirm live departure in DB Navigator.",
+      },
+    ],
   },
   {
     slug: "warnemuende",
@@ -524,6 +828,24 @@ export const destinations: Destination[] = [
     lng: 12.086,
     trainHint: "Travel to Rostock by regional train, then continue locally to Warnemünde.",
     image: "/destinations/warnemuende.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE5",
+        from: "Berlin Hbf",
+        to: "Rostock Hbf",
+        duration: "2h 40m",
+        note: "Regional route north.",
+      },
+      {
+        type: "S",
+        line: "S-Bahn Rostock",
+        from: "Rostock Hbf",
+        to: "Warnemünde",
+        duration: "25 min",
+        note: "Local connection to the coast.",
+      },
+    ],
   },
   {
     slug: "stralsund",
@@ -539,6 +861,16 @@ export const destinations: Destination[] = [
     lng: 13.0818,
     trainHint: "Use regional-only routing from Berlin toward Stralsund.",
     image: "/destinations/stralsund.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Stralsund Hbf",
+        duration: "3h 30m",
+        note: "Regional route toward the Baltic. Check live departures.",
+      },
+    ],
   },
   {
     slug: "greifswald",
@@ -554,6 +886,16 @@ export const destinations: Destination[] = [
     lng: 13.3833,
     trainHint: "Regional routes from Berlin can connect toward Greifswald.",
     image: "/destinations/greifswald.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE3",
+        from: "Berlin Hbf",
+        to: "Greifswald",
+        duration: "3h 20m",
+        note: "Regional route north-east toward the Baltic.",
+      },
+    ],
   },
   {
     slug: "wismar",
@@ -569,35 +911,23 @@ export const destinations: Destination[] = [
     lng: 11.4647,
     trainHint: "Use regional-only routing from Berlin; expect transfers.",
     image: "/destinations/wismar.jpg",
-  },
-  {
-    slug: "prenzlau",
-    name: "Prenzlau",
-    state: "Brandenburg",
-    summary: "Uckermark lake town with old walls, quiet water views, and cycling routes.",
-    categories: ["Lakes", "Nature", "History"],
-    tripTypes: ["Day Trip", "Weekend Trip"],
-    durationMin: 95,
-    time: "1h 35m",
-    transfers: "Direct",
-    lat: 53.3167,
-    lng: 13.8667,
-    trainHint: "Regional trains north from Berlin connect with Prenzlau.",
-    image: "/destinations/prenzlau.jpg",
-  },
-  {
-    slug: "eisenhuettenstadt",
-    name: "Eisenhüttenstadt",
-    state: "Brandenburg",
-    summary: "Planned city architecture, Oder region access, and unusual urban history.",
-    categories: ["Architecture", "History", "City"],
-    tripTypes: ["Day Trip"],
-    durationMin: 100,
-    time: "1h 40m",
-    transfers: "Direct or 1",
-    lat: 52.15,
-    lng: 14.65,
-    trainHint: "Regional connections run east from Berlin toward Eisenhüttenstadt.",
-    image: "/destinations/eisenhuettenstadt.jpg",
+    route: [
+      {
+        type: "RE",
+        line: "RE8/RE5",
+        from: "Berlin Hbf",
+        to: "Regional transfer",
+        duration: "Varies",
+        note: "Regional-only routes require transfers.",
+      },
+      {
+        type: "RE",
+        line: "RE",
+        from: "Regional transfer",
+        to: "Wismar",
+        duration: "Varies",
+        note: "Check exact route in DB Navigator.",
+      },
+    ],
   },
 ];

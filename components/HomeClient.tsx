@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import MapWrapper from "@/components/MapWrapper";
-import { destinations, type Destination } from "@/data/destinations";
+import { destinations, type Destination, type TrainRouteStep } from "@/data/destinations";
 
 const categories = [
   "All",
@@ -26,6 +26,25 @@ const durationOptions = [
   { label: "Under 3 hours", value: "180" },
   { label: "Under 4 hours", value: "240" },
 ];
+
+function lineBadgeClass(type: TrainRouteStep["type"]) {
+  switch (type) {
+    case "S":
+      return "bg-green-600 text-white";
+    case "U":
+      return "bg-blue-700 text-white";
+    case "RE":
+      return "bg-red-600 text-white";
+    case "RB":
+      return "bg-orange-500 text-white";
+    case "Bus":
+      return "bg-purple-600 text-white";
+    case "Tram":
+      return "bg-pink-600 text-white";
+    default:
+      return "bg-slate-700 text-white";
+  }
+}
 
 export default function HomeClient() {
   const [query, setQuery] = useState("");
@@ -182,14 +201,6 @@ export default function HomeClient() {
                 </span>
               </div>
 
-              {selectedDestination.image && (
-                <img
-                  src={selectedDestination.image}
-                  alt={selectedDestination.name}
-                  className="mt-5 h-56 w-full rounded-3xl object-cover"
-                />
-              )}
-
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <div className="rounded-3xl bg-[#F7FAFD] p-4">
                   <p className="text-sm text-[#5f6b85]">State</p>
@@ -214,12 +225,44 @@ export default function HomeClient() {
               </div>
 
               <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
-                <h3 className="mb-2 text-xl font-bold text-[#0B3B82]">
-                  Route preview
+                <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
+                  Train route preview
                 </h3>
-                <p className="text-sm text-[#5f6b85]">
-                  {selectedDestination.trainHint}
-                </p>
+
+                <div className="space-y-3">
+                  {selectedDestination.route.map((step, index) => (
+                    <div
+                      key={`${step.line}-${index}`}
+                      className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
+                    >
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span
+                          className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
+                            step.type,
+                          )}`}
+                        >
+                          {step.type}
+                        </span>
+
+                        <span className="font-black text-[#0B3B82]">
+                          {step.line}
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#FF8A1F]">
+                          {step.duration}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-sm text-[#5f6b85]">
+                        {step.from} → {step.to}
+                      </p>
+
+                      {step.note && (
+                        <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 <a
                   href={`https://www.bahn.de/buchung/start?S=Berlin%20Hbf&Z=${encodeURIComponent(
