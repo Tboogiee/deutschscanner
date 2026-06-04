@@ -2,7 +2,12 @@
 
 import { useMemo, useState } from "react";
 import MapWrapper from "@/components/MapWrapper";
-import { destinations, type Destination, type TrainRouteStep } from "@/data/destinations";
+import {
+  destinations,
+  type Destination,
+  type RouteOption,
+  type TransitType,
+} from "@/data/destinations";
 
 const categories = [
   "All",
@@ -27,7 +32,7 @@ const durationOptions = [
   { label: "Under 4 hours", value: "240" },
 ];
 
-function lineBadgeClass(type: TrainRouteStep["type"]) {
+function lineBadgeClass(type: TransitType) {
   switch (type) {
     case "S":
       return "bg-green-600 text-white";
@@ -52,6 +57,9 @@ export default function HomeClient() {
   const [tripType, setTripType] = useState("All");
   const [duration, setDuration] = useState("any");
   const [selectedSlug, setSelectedSlug] = useState(destinations[0].slug);
+  const [selectedRouteId, setSelectedRouteId] = useState(
+    destinations[0].routeOptions[0]?.id ?? "",
+  );
 
   const filteredDestinations = useMemo(() => {
     return destinations.filter((destination) => {
@@ -78,8 +86,25 @@ export default function HomeClient() {
     filteredDestinations[0] ??
     destinations[0];
 
-  function handleSelect(destination: Destination) {
+  const selectedRoute =
+    selectedDestination.routeOptions.find((route) => route.id === selectedRouteId) ??
+    selectedDestination.routeOptions[0];
+
+  function handleSelectDestination(destination: Destination) {
     setSelectedSlug(destination.slug);
+    setSelectedRouteId(destination.routeOptions[0]?.id ?? "");
+  }
+
+  function handleSelectSlug(slug: string) {
+    const destination = destinations.find((item) => item.slug === slug);
+    if (!destination) return;
+
+    setSelectedSlug(destination.slug);
+    setSelectedRouteId(destination.routeOptions[0]?.id ?? "");
+  }
+
+  function handleSelectRoute(route: RouteOption) {
+    setSelectedRouteId(route.id);
   }
 
   return (
@@ -155,7 +180,7 @@ export default function HomeClient() {
               {filteredDestinations.map((destination) => (
                 <button
                   key={destination.slug}
-                  onClick={() => handleSelect(destination)}
+                  onClick={() => handleSelectDestination(destination)}
                   className={`w-full rounded-3xl border p-4 text-left transition ${
                     selectedDestination.slug === destination.slug
                       ? "border-[#FF8A1F] bg-[#FFF7EF]"
@@ -181,7 +206,8 @@ export default function HomeClient() {
               <MapWrapper
                 points={filteredDestinations}
                 selectedSlug={selectedDestination.slug}
-                onSelect={setSelectedSlug}
+                selectedRoute={selectedRoute}
+                onSelect={handleSelectSlug}
               />
             </div>
 
@@ -200,6 +226,17 @@ export default function HomeClient() {
                   {selectedDestination.time}
                 </span>
               </div>
+
+              {selectedDestination.image && (
+                <img
+                  src={selectedDestination.image}
+                  alt={selectedDestination.name}
+                  className="mt-5 h-56 w-full rounded-3xl object-cover"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <div className="rounded-3xl bg-[#F7FAFD] p-4">
@@ -226,43 +263,63 @@ export default function HomeClient() {
 
               <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
                 <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
-                  Train route preview
+                  Choose your train route
                 </h3>
 
-                <div className="space-y-3">
-                  {selectedDestination.route.map((step, index) => (
-                    <div
-                      key={`${step.line}-${index}`}
-                      className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
+                <div className="grid gap-3 md:grid-cols-2">
+                  {selectedDestination.routeOptions.map((route) => (
+                    <button
+                      key={route.id}
+                      onClick={() => handleSelectRoute(route)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selectedRoute?.id === route.id
+                          ? "border-[#FF8A1F] bg-[#FFF7EF]"
+                          : "border-[#E3EAF3] bg-white hover:border-[#FF8A1F]"
+                      }`}
                     >
                       <div className="flex flex-wrap items-center gap-3">
                         <span
                           className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
-                            step.type,
+                            route.type,
                           )}`}
                         >
-                          {step.type}
+                          {route.type}
                         </span>
 
                         <span className="font-black text-[#0B3B82]">
-                          {step.line}
+                          {route.line}
                         </span>
 
                         <span className="text-sm font-semibold text-[#FF8A1F]">
-                          {step.duration}
+                          {route.duration}
                         </span>
                       </div>
 
                       <p className="mt-2 text-sm text-[#5f6b85]">
-                        {step.from} → {step.to}
+                        {route.stops.length} stops · {route.label}
                       </p>
-
-                      {step.note && (
-                        <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
-                      )}
-                    </div>
+                    </button>
                   ))}
                 </div>
+
+                {selectedRoute && (
+                  <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-white p-5">
+                    <h4 className="font-bold text-[#0B3B82]">
+                      Stops on {selectedRoute.line}
+                    </h4>
+
+                    <ol className="mt-3 space-y-2 text-sm text-[#5f6b85]">
+                      {selectedRoute.stops.map((stop, index) => (
+                        <li key={`${stop.name}-${index}`} className="flex gap-3">
+                          <span className="font-bold text-[#FF8A1F]">
+                            {index + 1}.
+                          </span>
+                          <span>{stop.name}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
                 <a
                   href={`https://www.bahn.de/buchung/start?S=Berlin%20Hbf&Z=${encodeURIComponent(

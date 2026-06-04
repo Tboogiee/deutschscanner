@@ -3,12 +3,20 @@
 import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, Polyline } from "react-leaflet";
-import type { Destination } from "@/data/destinations";
+import {
+  CircleMarker,
+  MapContainer,
+  Marker,
+  Popup,
+  Polyline,
+  TileLayer,
+} from "react-leaflet";
+import type { Destination, RouteOption } from "@/data/destinations";
 
 type MockupMapProps = {
   points: Destination[];
   selectedSlug?: string;
+  selectedRoute?: RouteOption;
   onSelect?: (slug: string) => void;
 };
 
@@ -25,9 +33,21 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+const selectedMarkerIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [32, 52],
+  iconAnchor: [16, 52],
+  popupAnchor: [1, -42],
+  shadowSize: [52, 52],
+});
+
 export default function MockupMap({
   points,
   selectedSlug,
+  selectedRoute,
   onSelect,
 }: MockupMapProps) {
   return (
@@ -51,7 +71,7 @@ export default function MockupMap({
           <Marker
             key={point.slug}
             position={[point.lat, point.lng]}
-            icon={markerIcon}
+            icon={point.slug === selectedSlug ? selectedMarkerIcon : markerIcon}
             eventHandlers={{
               click: () => onSelect?.(point.slug),
             }}
@@ -64,25 +84,38 @@ export default function MockupMap({
           </Marker>
         ))}
 
-        {points.map((point, index) => (
-          <Polyline
-            key={`${point.slug}-line`}
-            positions={[
-              berlin,
-              [point.lat, point.lng],
-            ]}
-            pathOptions={{
-              color:
-                point.slug === selectedSlug
-                  ? "#FF8A1F"
-                  : index % 2 === 0
-                    ? "#0B3B82"
-                    : "#7C93B8",
-              weight: point.slug === selectedSlug ? 6 : 3,
-              opacity: point.slug === selectedSlug ? 0.95 : 0.45,
-            }}
-          />
-        ))}
+        {selectedRoute && (
+          <>
+            <Polyline
+              positions={selectedRoute.geometry}
+              pathOptions={{
+                color: "#FF8A1F",
+                weight: 6,
+                opacity: 0.95,
+              }}
+            />
+
+            {selectedRoute.stops.map((stop, index) => (
+              <CircleMarker
+                key={`${stop.name}-${index}`}
+                center={stop.coordinates}
+                radius={index === 0 || index === selectedRoute.stops.length - 1 ? 7 : 5}
+                pathOptions={{
+                  color: "#0B3B82",
+                  fillColor: "#ffffff",
+                  fillOpacity: 1,
+                  weight: 3,
+                }}
+              >
+                <Popup>
+                  <strong>{index + 1}. {stop.name}</strong>
+                  <br />
+                  {selectedRoute.line}
+                </Popup>
+              </CircleMarker>
+            ))}
+          </>
+        )}
       </MapContainer>
     </div>
   );

@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { destinations, type TrainRouteStep } from "@/data/destinations";
+import {
+  destinations,
+  type RouteOption,
+  type TransitType,
+} from "@/data/destinations";
 
 type DestinationPageProps = {
   params: Promise<{
@@ -7,7 +11,7 @@ type DestinationPageProps = {
   }>;
 };
 
-function lineBadgeClass(type: TrainRouteStep["type"]) {
+function lineBadgeClass(type: TransitType) {
   switch (type) {
     case "S":
       return "bg-green-600 text-white";
@@ -24,6 +28,41 @@ function lineBadgeClass(type: TrainRouteStep["type"]) {
     default:
       return "bg-slate-700 text-white";
   }
+}
+
+function RouteCard({ route }: { route: RouteOption }) {
+  return (
+    <div className="rounded-2xl border border-[#E3EAF3] bg-white p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <span
+          className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
+            route.type,
+          )}`}
+        >
+          {route.type}
+        </span>
+
+        <span className="font-black text-[#0B3B82]">{route.line}</span>
+
+        <span className="text-sm font-semibold text-[#FF8A1F]">
+          {route.duration}
+        </span>
+      </div>
+
+      <p className="mt-2 text-sm text-[#5f6b85]">
+        {route.stops.length} stops · {route.label}
+      </p>
+
+      <ol className="mt-3 space-y-1 text-sm text-[#5f6b85]">
+        {route.stops.map((stop, index) => (
+          <li key={`${stop.name}-${index}`}>
+            <span className="font-bold text-[#FF8A1F]">{index + 1}.</span>{" "}
+            {stop.name}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
 export default async function DestinationPage({ params }: DestinationPageProps) {
@@ -92,39 +131,12 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
 
         <section className="mt-6 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-6">
           <h2 className="text-2xl font-bold text-[#0B3B82]">
-            Train route preview
+            Train route options
           </h2>
 
           <div className="mt-4 space-y-3">
-            {destination.route.map((step, index) => (
-              <div
-                key={`${step.line}-${index}`}
-                className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <span
-                    className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
-                      step.type,
-                    )}`}
-                  >
-                    {step.type}
-                  </span>
-
-                  <span className="font-black text-[#0B3B82]">{step.line}</span>
-
-                  <span className="text-sm font-semibold text-[#FF8A1F]">
-                    {step.duration}
-                  </span>
-                </div>
-
-                <p className="mt-2 text-sm text-[#5f6b85]">
-                  {step.from} → {step.to}
-                </p>
-
-                {step.note && (
-                  <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
-                )}
-              </div>
+            {destination.routeOptions.map((route) => (
+              <RouteCard key={route.id} route={route} />
             ))}
           </div>
         </section>
