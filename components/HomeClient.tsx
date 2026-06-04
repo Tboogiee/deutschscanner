@@ -5,8 +5,7 @@ import MapWrapper from "@/components/MapWrapper";
 import {
   destinations,
   type Destination,
-  type RouteOption,
-  type TransitType,
+  type TrainRouteStep,
 } from "@/data/destinations";
 
 const categories = [
@@ -32,7 +31,11 @@ const durationOptions = [
   { label: "Under 4 hours", value: "240" },
 ];
 
-function lineBadgeClass(type: TransitType) {
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function lineBadgeClass(type: TrainRouteStep["type"]) {
   switch (type) {
     case "S":
       return "bg-green-600 text-white";
@@ -51,15 +54,28 @@ function lineBadgeClass(type: TransitType) {
   }
 }
 
+function buildDbUrl(destinationName: string, date: string, time: string, timeMode: string) {
+  const params = new URLSearchParams();
+
+  params.set("S", "Berlin Hbf");
+  params.set("Z", destinationName);
+  params.set("date", date);
+  params.set("time", time);
+  params.set("timesel", timeMode);
+
+  return `https://www.bahn.de/buchung/start?${params.toString()}`;
+}
+
 export default function HomeClient() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [tripType, setTripType] = useState("All");
   const [duration, setDuration] = useState("any");
   const [selectedSlug, setSelectedSlug] = useState(destinations[0].slug);
-  const [selectedRouteId, setSelectedRouteId] = useState(
-    destinations[0].routeOptions[0]?.id ?? "",
-  );
+
+  const [travelDate, setTravelDate] = useState(todayISO());
+  const [travelTime, setTravelTime] = useState("09:00");
+  const [timeMode, setTimeMode] = useState("depart");
 
   const filteredDestinations = useMemo(() => {
     return destinations.filter((destination) => {
@@ -86,25 +102,15 @@ export default function HomeClient() {
     filteredDestinations[0] ??
     destinations[0];
 
-  const selectedRoute =
-    selectedDestination.routeOptions.find((route) => route.id === selectedRouteId) ??
-    selectedDestination.routeOptions[0];
+  const dbUrl = buildDbUrl(
+    selectedDestination.name,
+    travelDate,
+    travelTime,
+    timeMode,
+  );
 
-  function handleSelectDestination(destination: Destination) {
+  function handleSelect(destination: Destination) {
     setSelectedSlug(destination.slug);
-    setSelectedRouteId(destination.routeOptions[0]?.id ?? "");
-  }
-
-  function handleSelectSlug(slug: string) {
-    const destination = destinations.find((item) => item.slug === slug);
-    if (!destination) return;
-
-    setSelectedSlug(destination.slug);
-    setSelectedRouteId(destination.routeOptions[0]?.id ?? "");
-  }
-
-  function handleSelectRoute(route: RouteOption) {
-    setSelectedRouteId(route.id);
   }
 
   return (
@@ -172,6 +178,37 @@ export default function HomeClient() {
               </select>
             </div>
 
+            <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-4">
+              <h3 className="mb-3 font-bold text-[#0B3B82]">
+                When do you want to travel?
+              </h3>
+
+              <div className="grid gap-3">
+                <input
+                  type="date"
+                  value={travelDate}
+                  onChange={(event) => setTravelDate(event.target.value)}
+                  className="rounded-2xl border border-[#D8E2F0] bg-white px-4 py-3 outline-none focus:border-[#FF8A1F]"
+                />
+
+                <input
+                  type="time"
+                  value={travelTime}
+                  onChange={(event) => setTravelTime(event.target.value)}
+                  className="rounded-2xl border border-[#D8E2F0] bg-white px-4 py-3 outline-none focus:border-[#FF8A1F]"
+                />
+
+                <select
+                  value={timeMode}
+                  onChange={(event) => setTimeMode(event.target.value)}
+                  className="rounded-2xl border border-[#D8E2F0] bg-white px-4 py-3 outline-none focus:border-[#FF8A1F]"
+                >
+                  <option value="depart">Depart at this time</option>
+                  <option value="arrive">Arrive by this time</option>
+                </select>
+              </div>
+            </div>
+
             <p className="mt-5 text-sm font-semibold text-[#0B3B82]">
               Showing {filteredDestinations.length} destinations
             </p>
@@ -180,7 +217,7 @@ export default function HomeClient() {
               {filteredDestinations.map((destination) => (
                 <button
                   key={destination.slug}
-                  onClick={() => handleSelectDestination(destination)}
+                  onClick={() => handleSelect(destination)}
                   className={`w-full rounded-3xl border p-4 text-left transition ${
                     selectedDestination.slug === destination.slug
                       ? "border-[#FF8A1F] bg-[#FFF7EF]"
@@ -206,8 +243,7 @@ export default function HomeClient() {
               <MapWrapper
                 points={filteredDestinations}
                 selectedSlug={selectedDestination.slug}
-                selectedRoute={selectedRoute}
-                onSelect={handleSelectSlug}
+                onSelect={setSelectedSlug}
               />
             </div>
 
@@ -227,104 +263,67 @@ export default function HomeClient() {
                 </span>
               </div>
 
-              {selectedDestination.image && (
-                <img
-                  src={selectedDestination.image}
-                  alt={selectedDestination.name}
-                  className="mt-5 h-56 w-full rounded-3xl object-cover"
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
-
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                  <p className="text-sm text-[#5f6b85]">State</p>
-                  <p className="font-bold text-[#0B3B82]">
-                    {selectedDestination.state}
-                  </p>
+                  <p className="text-sm text-[#5f6b85]">Date</p>
+                  <p className="font-bold text-[#0B3B82]">{travelDate}</p>
                 </div>
 
                 <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                  <p className="text-sm text-[#5f6b85]">Transfers</p>
-                  <p className="font-bold text-[#0B3B82]">
-                    {selectedDestination.transfers}
-                  </p>
+                  <p className="text-sm text-[#5f6b85]">Time</p>
+                  <p className="font-bold text-[#0B3B82]">{travelTime}</p>
                 </div>
 
                 <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                  <p className="text-sm text-[#5f6b85]">Best for</p>
+                  <p className="text-sm text-[#5f6b85]">Search mode</p>
                   <p className="font-bold text-[#0B3B82]">
-                    {selectedDestination.categories.slice(0, 2).join(", ")}
+                    {timeMode === "depart" ? "Depart at" : "Arrive by"}
                   </p>
                 </div>
               </div>
 
               <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
                 <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
-                  Choose your train route
+                  Train route preview
                 </h3>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  {selectedDestination.routeOptions.map((route) => (
-                    <button
-                      key={route.id}
-                      onClick={() => handleSelectRoute(route)}
-                      className={`rounded-2xl border p-4 text-left transition ${
-                        selectedRoute?.id === route.id
-                          ? "border-[#FF8A1F] bg-[#FFF7EF]"
-                          : "border-[#E3EAF3] bg-white hover:border-[#FF8A1F]"
-                      }`}
+                <div className="space-y-3">
+                  {selectedDestination.route.map((step, index) => (
+                    <div
+                      key={`${step.line}-${index}`}
+                      className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
                     >
                       <div className="flex flex-wrap items-center gap-3">
                         <span
                           className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
-                            route.type,
+                            step.type,
                           )}`}
                         >
-                          {route.type}
+                          {step.type}
                         </span>
 
                         <span className="font-black text-[#0B3B82]">
-                          {route.line}
+                          {step.line}
                         </span>
 
                         <span className="text-sm font-semibold text-[#FF8A1F]">
-                          {route.duration}
+                          {step.duration}
                         </span>
                       </div>
 
                       <p className="mt-2 text-sm text-[#5f6b85]">
-                        {route.stops.length} stops · {route.label}
+                        {step.from} → {step.to}
                       </p>
-                    </button>
+
+                      {step.note && (
+                        <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
+                      )}
+                    </div>
                   ))}
                 </div>
 
-                {selectedRoute && (
-                  <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-white p-5">
-                    <h4 className="font-bold text-[#0B3B82]">
-                      Stops on {selectedRoute.line}
-                    </h4>
-
-                    <ol className="mt-3 space-y-2 text-sm text-[#5f6b85]">
-                      {selectedRoute.stops.map((stop, index) => (
-                        <li key={`${stop.name}-${index}`} className="flex gap-3">
-                          <span className="font-bold text-[#FF8A1F]">
-                            {index + 1}.
-                          </span>
-                          <span>{stop.name}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-
                 <a
-                  href={`https://www.bahn.de/buchung/start?S=Berlin%20Hbf&Z=${encodeURIComponent(
-                    selectedDestination.name,
-                  )}`}
+                  href={dbUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-4 inline-flex items-center gap-3 rounded-full border border-[#DDE6F3] bg-white px-5 py-3 text-sm font-semibold text-[#0B3B82]"
@@ -332,8 +331,13 @@ export default function HomeClient() {
                   <span className="rounded bg-red-600 px-2 py-1 font-black text-white">
                     DB
                   </span>
-                  Open in DB Navigator
+                  Open timetable on bahn.de
                 </a>
+
+                <p className="mt-3 text-xs text-[#7C879B]">
+                  Opens DB with Berlin Hbf, your selected destination, date, and time.
+                  Use DB’s Deutschlandticket filter to show only valid regional options.
+                </p>
               </div>
             </div>
           </section>
