@@ -2,11 +2,20 @@
 
 import { useMemo, useState } from "react";
 import MapWrapper from "@/components/MapWrapper";
-import {
-  destinations,
-  type Destination,
-  type TrainRouteStep,
-} from "@/data/destinations";
+import { destinations, type Destination } from "@/data/destinations";
+
+type TrainRouteStep = {
+  type: "S" | "U" | "RE" | "RB" | "Bus" | "Tram";
+  line: string;
+  from: string;
+  to: string;
+  duration: string;
+  note?: string;
+};
+
+type DestinationWithOptionalRoute = Destination & {
+  route?: TrainRouteStep[];
+};
 
 const categories = [
   "All",
@@ -54,7 +63,12 @@ function lineBadgeClass(type: TrainRouteStep["type"]) {
   }
 }
 
-function buildDbUrl(destinationName: string, date: string, time: string, timeMode: string) {
+function buildDbUrl(
+  destinationName: string,
+  date: string,
+  time: string,
+  timeMode: string,
+) {
   const params = new URLSearchParams();
 
   params.set("S", "Berlin Hbf");
@@ -98,9 +112,11 @@ export default function HomeClient() {
   }, [query, category, tripType, duration]);
 
   const selectedDestination =
-    destinations.find((destination) => destination.slug === selectedSlug) ??
-    filteredDestinations[0] ??
-    destinations[0];
+    (destinations.find((destination) => destination.slug === selectedSlug) ??
+      filteredDestinations[0] ??
+      destinations[0]) as DestinationWithOptionalRoute;
+
+  const routePreview = selectedDestination.route ?? [];
 
   const dbUrl = buildDbUrl(
     selectedDestination.name,
@@ -287,40 +303,49 @@ export default function HomeClient() {
                   Train route preview
                 </h3>
 
-                <div className="space-y-3">
-                  {selectedDestination.route.map((step, index) => (
-                    <div
-                      key={`${step.line}-${index}`}
-                      className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span
-                          className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
-                            step.type,
-                          )}`}
-                        >
-                          {step.type}
-                        </span>
+                {routePreview.length > 0 ? (
+                  <div className="space-y-3">
+                    {routePreview.map((step, index) => (
+                      <div
+                        key={`${step.line}-${index}`}
+                        className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
+                      >
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span
+                            className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
+                              step.type,
+                            )}`}
+                          >
+                            {step.type}
+                          </span>
 
-                        <span className="font-black text-[#0B3B82]">
-                          {step.line}
-                        </span>
+                          <span className="font-black text-[#0B3B82]">
+                            {step.line}
+                          </span>
 
-                        <span className="text-sm font-semibold text-[#FF8A1F]">
-                          {step.duration}
-                        </span>
+                          <span className="text-sm font-semibold text-[#FF8A1F]">
+                            {step.duration}
+                          </span>
+                        </div>
+
+                        <p className="mt-2 text-sm text-[#5f6b85]">
+                          {step.from} → {step.to}
+                        </p>
+
+                        {step.note && (
+                          <p className="mt-1 text-xs text-[#7C879B]">
+                            {step.note}
+                          </p>
+                        )}
                       </div>
-
-                      <p className="mt-2 text-sm text-[#5f6b85]">
-                        {step.from} → {step.to}
-                      </p>
-
-                      {step.note && (
-                        <p className="mt-1 text-xs text-[#7C879B]">{step.note}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#5f6b85]">
+                    Route details will appear here once route steps are added to the
+                    destination database.
+                  </p>
+                )}
 
                 <a
                   href={dbUrl}
