@@ -42,8 +42,8 @@ const durationOptions = [
 ];
 
 const imageBySlug: Record<string, string> = {
-  waren: "/destinations/waren.jpg",
   "waren-mueritz": "/destinations/waren.jpg",
+  waren: "/destinations/waren.jpg",
   potsdam: "/destinations/potsdam.jpg",
   schwerin: "/destinations/schwerin.jpg",
   rostock: "/destinations/rostock.jpg",
@@ -53,72 +53,62 @@ const imageBySlug: Record<string, string> = {
 
 const longDescriptions: Record<string, string> = {
   "waren-mueritz":
-    "Waren (Müritz) is one of the most beautiful lake escapes reachable from Berlin by regional train. It sits directly on Lake Müritz, Germany’s largest inland lake, with a charming harbor, relaxed cafés, lakeside promenades, and access to the Müritz National Park. It is ideal for travelers who want fresh air, water views, cycling, swimming, and a slower weekend rhythm without needing a car.",
-  waren:
-    "Waren (Müritz) is one of the most beautiful lake escapes reachable from Berlin by regional train. It sits directly on Lake Müritz, Germany’s largest inland lake, with a charming harbor, relaxed cafés, lakeside promenades, and access to the Müritz National Park. It is ideal for travelers who want fresh air, water views, cycling, swimming, and a slower weekend rhythm without needing a car.",
+    "Waren (Müritz) is one of the most beautiful lake escapes reachable from Berlin by regional train. It sits directly on Lake Müritz, Germany’s largest inland lake, with a charming harbor, relaxed cafés, lakeside promenades, and access to the Müritz National Park.",
   potsdam:
-    "Potsdam is the easiest elegant escape from Berlin. It combines palace gardens, lakes, historic streets, cafés, and wide green spaces. It is perfect for a half-day or full-day trip when you want something beautiful, classic, and low-effort.",
+    "Potsdam is the easiest elegant escape from Berlin. It combines palace gardens, lakes, historic streets, cafés, and wide green spaces.",
   schwerin:
-    "Schwerin feels like a fairytale weekend destination. The castle sits between lakes, the old town is calm and walkable, and the city has a slower northern rhythm that makes it feel much farther from Berlin than it actually is.",
+    "Schwerin feels like a fairytale weekend destination. The castle sits between lakes, the old town is calm and walkable, and the city has a slower northern rhythm.",
   rostock:
-    "Rostock gives you northern city energy with access to the Baltic Sea. It works well as a weekend trip for harbor walks, old-town streets, seafood, and continuing onward to Warnemünde for the beach.",
+    "Rostock gives you northern city energy with access to the Baltic Sea. It works well as a weekend trip for harbor walks, old-town streets, seafood, and beach access.",
   luebbenau:
-    "Lübbenau is the classic Spreewald escape. It is green, quiet, watery, and perfect for boat rides, cycling, forest walks, pickles, and a complete change of atmosphere from Berlin.",
+    "Lübbenau is the classic Spreewald escape: green, quiet, watery, and perfect for boat rides, cycling, forest walks, and a complete change of atmosphere from Berlin.",
   dresden:
-    "Dresden is one of the strongest cultural weekend trips from Berlin. It offers baroque architecture, museums, river views, cafés, and a dramatic old-town setting along the Elbe.",
+    "Dresden is one of the strongest cultural weekend trips from Berlin, with baroque architecture, museums, river views, cafés, and a dramatic old-town setting along the Elbe.",
 };
 
 const itineraries: Record<string, string[]> = {
   "waren-mueritz": [
-    "Arrive at Waren (Müritz) station and walk toward the harbor.",
-    "Have coffee or lunch near the lakeside promenade.",
+    "Walk from the station toward the harbor.",
+    "Have coffee or lunch by the lakeside promenade.",
     "Visit the Müritzeum nature discovery center.",
-    "Walk or cycle along Lake Müritz for open water views.",
+    "Walk or cycle along Lake Müritz.",
     "Take a boat ride if the weather is good.",
-    "Stay for sunset by the harbor before returning or spending the night.",
-  ],
-  waren: [
-    "Arrive at Waren (Müritz) station and walk toward the harbor.",
-    "Have coffee or lunch near the lakeside promenade.",
-    "Visit the Müritzeum nature discovery center.",
-    "Walk or cycle along Lake Müritz for open water views.",
-    "Take a boat ride if the weather is good.",
-    "Stay for sunset by the harbor before returning or spending the night.",
+    "Stay for sunset at the harbor.",
   ],
   potsdam: [
     "Arrive at Potsdam Hbf.",
-    "Walk toward the Dutch Quarter for cafés and streets.",
+    "Walk through the Dutch Quarter.",
     "Visit Sanssouci Park and palace gardens.",
     "Stop by Neues Palais or the Orangery.",
-    "End with dinner near the old town before returning to Berlin.",
+    "End with dinner near the old town.",
   ],
   schwerin: [
     "Arrive at Schwerin Hbf.",
-    "Walk through the old town toward Schwerin Castle.",
-    "Explore the castle gardens and lakeside views.",
-    "Have lunch or coffee in the historic center.",
-    "Take a lake walk before heading back or staying overnight.",
+    "Walk toward Schwerin Castle.",
+    "Explore the castle gardens.",
+    "Have lunch in the historic center.",
+    "Take a lake walk before returning.",
   ],
   rostock: [
     "Arrive at Rostock Hbf.",
     "Explore the old town and Neuer Markt.",
     "Walk toward the harbor area.",
-    "Continue to Warnemünde if you want beach time.",
-    "Return to Rostock for dinner or stay overnight.",
+    "Continue to Warnemünde for beach time.",
+    "Return for dinner or stay overnight.",
   ],
   luebbenau: [
     "Arrive at Lübbenau station.",
     "Walk into the Spreewald old town area.",
-    "Take a traditional punt boat ride through the canals.",
-    "Try local Spreewald pickles and lunch.",
+    "Take a traditional canal boat ride.",
+    "Try local Spreewald pickles.",
     "Rent a bike or walk along the waterways.",
   ],
   dresden: [
     "Arrive at Dresden Hbf.",
-    "Walk toward the old town and Frauenkirche.",
+    "Walk toward Frauenkirche.",
     "Visit the Zwinger or museum quarter.",
     "Walk along the Elbe riverfront.",
-    "Have dinner in the Neustadt or old town before returning.",
+    "Have dinner in the old town or Neustadt.",
   ],
 };
 
@@ -278,23 +268,21 @@ export default function HomeClient() {
             <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">News</button>
             <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">Destinations</button>
             <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">Contact</button>
-            <button className="rounded-full border border-[#DDE6F3] px-4 py-2 hover:bg-[#F1F5FB]">
-              Login
-            </button>
             <span className="ml-2 rounded-full bg-[#FFF1E3] px-4 py-2 text-[#D96A00]">
-              Hello Marianna!
+              Hello Roy!
             </span>
           </nav>
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[0.92fr_1.08fr]">
+      <section className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
         <aside className="rounded-[2rem] border border-[#DDE6F3] bg-white p-6 shadow-sm">
           <h1 className="text-4xl font-black text-[#0B3B82]">
-            Plan your next escape
+            Discover, Explore, Go.
           </h1>
+
           <p className="mt-2 text-[#5f6b85]">
-            Choose a vibe, travel time, and destination. Then open the route in DB.
+            Choose a vibe, travel window, and destination. Then open the route in DB.
           </p>
 
           <div className="mt-6 grid gap-3">
@@ -305,66 +293,60 @@ export default function HomeClient() {
               className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
             />
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <select
-                value={timeMode}
-                onChange={(event) => setTimeMode(event.target.value)}
-                className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-              >
-                <option value="depart">Departure time</option>
-                <option value="arrive">Arrival time</option>
-              </select>
+            <select
+              value={timeMode}
+              onChange={(event) => setTimeMode(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            >
+              <option value="depart">Departure time</option>
+              <option value="arrive">Arrival time</option>
+            </select>
 
-              <select
-                value={duration}
-                onChange={(event) => setDuration(event.target.value)}
-                className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-              >
-                {durationOptions.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <input
+              type="date"
+              value={travelDate}
+              onChange={(event) => setTravelDate(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            />
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <select
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-              >
-                {categories.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
+            <input
+              type="time"
+              value={travelTime}
+              onChange={(event) => setTravelTime(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            />
 
-              <select
-                value={tripType}
-                onChange={(event) => setTripType(event.target.value)}
-                className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-              >
-                {tripTypes.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={duration}
+              onChange={(event) => setDuration(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            >
+              {durationOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <input
-                type="date"
-                value={travelDate}
-                onChange={(event) => setTravelDate(event.target.value)}
-                className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-              />
+            <select
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            >
+              {categories.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
 
-              <input
-                type="time"
-                value={travelTime}
-                onChange={(event) => setTravelTime(event.target.value)}
-                className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-              />
-            </div>
+            <select
+              value={tripType}
+              onChange={(event) => setTripType(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            >
+              {tripTypes.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
 
             <button
               onClick={handleSearch}
@@ -378,6 +360,7 @@ export default function HomeClient() {
             <h2 className="text-2xl font-black text-[#0B3B82]">
               Suggested places
             </h2>
+
             <p className="mt-1 text-sm text-[#5f6b85]">
               Showing {filteredDestinations.length} matching destinations.
             </p>
@@ -437,113 +420,111 @@ export default function HomeClient() {
             />
           </div>
 
-          <div className="rounded-[2rem] border border-[#DDE6F3] bg-white p-6 shadow-sm">
-            <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-              <div>
-                <h2 className="text-5xl font-black text-[#0B3B82]">
-                  {selectedDestination.name}
-                </h2>
+          <article className="rounded-[2rem] border border-[#DDE6F3] bg-white p-6 shadow-sm">
+            <h2 className="text-6xl font-black leading-none text-[#0B3B82]">
+              {selectedDestination.name}
+            </h2>
 
-                <p className="mt-4 text-[#5f6b85]">
-                  {getDestinationDescription(selectedDestination)}
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="rounded-3xl bg-[#F7FAFD] p-4">
+                <p className="text-xs text-[#5f6b85]">Travel time</p>
+                <p className="font-bold text-[#0B3B82]">
+                  {selectedDestination.time}
                 </p>
-
-                <img
-                  src={getDestinationImage(selectedDestination)}
-                  alt={selectedDestination.name}
-                  className="mt-5 h-64 w-full rounded-3xl object-cover"
-                />
-
-                <div className="mt-5 rounded-3xl bg-[#F7FAFD] p-5">
-                  <h3 className="text-xl font-black text-[#0B3B82]">
-                    Suggested itinerary
-                  </h3>
-
-                  <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[#5f6b85]">
-                    {getDestinationItinerary(selectedDestination).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ol>
-                </div>
               </div>
 
-              <div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                    <p className="text-xs text-[#5f6b85]">Travel time</p>
-                    <p className="font-bold text-[#0B3B82]">
-                      {selectedDestination.time}
-                    </p>
-                  </div>
+              <div className="rounded-3xl bg-[#F7FAFD] p-4">
+                <p className="text-xs text-[#5f6b85]">
+                  {timeMode === "depart" ? "Date to leave" : "Date to arrive"}
+                </p>
+                <p className="font-bold text-[#0B3B82]">{travelDate}</p>
+              </div>
 
-                  <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                    <p className="text-xs text-[#5f6b85]">Date</p>
-                    <p className="font-bold text-[#0B3B82]">{travelDate}</p>
-                  </div>
-
-                  <div className="rounded-3xl bg-[#F7FAFD] p-4">
-                    <p className="text-xs text-[#5f6b85]">Time</p>
-                    <p className="font-bold text-[#0B3B82]">{travelTime}</p>
-                  </div>
-                </div>
-
-                <div className="mt-5 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
-                  <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
-                    Train route preview
-                  </h3>
-
-                  <div className="space-y-3">
-                    {routePreview.map((step, index) => (
-                      <div
-                        key={`${step.line}-${index}`}
-                        className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
-                      >
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span
-                            className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
-                              step.type,
-                            )}`}
-                          >
-                            {step.type}
-                          </span>
-
-                          <span className="font-black text-[#0B3B82]">
-                            {step.line}
-                          </span>
-
-                          <span className="text-sm font-semibold text-[#FF8A1F]">
-                            {step.duration}
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-sm text-[#5f6b85]">
-                          {step.from} → {step.to}
-                        </p>
-
-                        {step.note && (
-                          <p className="mt-1 text-xs text-[#7C879B]">
-                            {step.note}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <a
-                    href={dbUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 inline-flex items-center gap-3 rounded-full border border-[#DDE6F3] bg-white px-5 py-3 text-sm font-semibold text-[#0B3B82]"
-                  >
-                    <span className="rounded bg-red-600 px-2 py-1 font-black text-white">
-                      DB
-                    </span>
-                    Search timetable on bahn.de
-                  </a>
-                </div>
+              <div className="rounded-3xl bg-[#F7FAFD] p-4">
+                <p className="text-xs text-[#5f6b85]">
+                  {timeMode === "depart" ? "Time to leave" : "Arrival time"}
+                </p>
+                <p className="font-bold text-[#0B3B82]">{travelTime}</p>
               </div>
             </div>
-          </div>
+
+            <img
+              src={getDestinationImage(selectedDestination)}
+              alt={selectedDestination.name}
+              className="mt-5 aspect-[4/2] w-full rounded-[2rem] object-cover"
+            />
+
+            <a
+              href={dbUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 flex w-full items-center justify-center gap-3 rounded-[1.5rem] bg-[#0B3B82] px-6 py-5 text-base font-black text-white shadow-sm transition hover:bg-[#082D63]"
+            >
+              <span className="rounded bg-red-600 px-2 py-1 font-black text-white">
+                DB
+              </span>
+              Search timetable on bahn.de
+            </a>
+
+            <p className="mt-5 text-[#5f6b85]">
+              {getDestinationDescription(selectedDestination)}
+            </p>
+
+            <section className="mt-6 rounded-3xl bg-[#F7FAFD] p-5">
+              <h3 className="text-2xl font-black text-[#0B3B82]">
+                What to do
+              </h3>
+
+              <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[#5f6b85]">
+                {getDestinationItinerary(selectedDestination).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ol>
+            </section>
+
+            <section className="mt-6 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
+              <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
+                Train route preview
+              </h3>
+
+              <div className="space-y-3">
+                {routePreview.map((step, index) => (
+                  <div
+                    key={`${step.line}-${index}`}
+                    className="rounded-2xl border border-[#E3EAF3] bg-white p-4"
+                  >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span
+                        className={`rounded-lg px-3 py-1 text-sm font-black ${lineBadgeClass(
+                          step.type,
+                        )}`}
+                      >
+                        {step.type}
+                      </span>
+
+                      <span className="font-black text-[#0B3B82]">
+                        {step.line}
+                      </span>
+
+                      <span className="text-sm font-semibold text-[#FF8A1F]">
+                        {step.duration}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm text-[#5f6b85]">
+                      {step.from} → {step.to}
+                    </p>
+
+                    {step.note && (
+                      <p className="mt-1 text-xs text-[#7C879B]">
+                        {step.note}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          </article>
         </section>
       </section>
     </main>
