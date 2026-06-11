@@ -19,7 +19,7 @@ type DestinationWithOptionalRoute = Destination & {
 };
 
 const categories = [
-  "All",
+  "All travel vibes",
   "City",
   "Architecture",
   "Lakes",
@@ -31,10 +31,16 @@ const categories = [
   "Wellness",
 ];
 
-const tripTypes = ["All", "Half-Day", "Day Trip", "Weekend Trip", "Multi Day Trip"];
+const tripTypes = [
+  "All experience types",
+  "Half-Day",
+  "Day Trip",
+  "Weekend Trip",
+  "Multi Day Trip",
+];
 
 const durationOptions = [
-  { label: "Any duration", value: "any" },
+  { label: "Any travel duration", value: "any" },
   { label: "Under 1 hour", value: "60" },
   { label: "Under 2 hours", value: "120" },
   { label: "Under 3 hours", value: "180" },
@@ -49,6 +55,7 @@ const imageBySlug: Record<string, string> = {
   rostock: "/destinations/rostock.jpg",
   luebbenau: "/destinations/luebbenau.jpg",
   dresden: "/destinations/dresden.jpg",
+  "werder-havel": "/destinations/werder.jpg",
 };
 
 const longDescriptions: Record<string, string> = {
@@ -64,6 +71,8 @@ const longDescriptions: Record<string, string> = {
     "Lübbenau is the classic Spreewald escape: green, quiet, watery, and perfect for boat rides, cycling, forest walks, and a complete change of atmosphere from Berlin.",
   dresden:
     "Dresden is one of the strongest cultural weekend trips from Berlin, with baroque architecture, museums, river views, cafés, and a dramatic old-town setting along the Elbe.",
+  "werder-havel":
+    "Werder (Havel) is a peaceful island town surrounded by water, orchards, cafés, and relaxed lake scenery. It is close enough for an easy half-day escape, but calm enough to feel like a real break from Berlin.",
 };
 
 const itineraries: Record<string, string[]> = {
@@ -110,6 +119,14 @@ const itineraries: Record<string, string[]> = {
     "Walk along the Elbe riverfront.",
     "Have dinner in the old town or Neustadt.",
   ],
+  "werder-havel": [
+    "Arrive at Werder (Havel) station.",
+    "Walk toward the island old town.",
+    "Stop for coffee or lunch near the water.",
+    "Explore the riverfront paths and small streets.",
+    "Visit during blossom season for orchard views.",
+    "Return to Berlin in the afternoon or evening.",
+  ],
 };
 
 function todayISO() {
@@ -145,6 +162,7 @@ function getBestDestinationStation(destination: DestinationWithOptionalRoute) {
   if (destination.name === "Dresden") return "Dresden Hbf";
   if (destination.name === "Leipzig") return "Leipzig Hbf";
   if (destination.name === "Schwerin") return "Schwerin Hbf";
+  if (destination.name === "Werder (Havel)") return "Werder (Havel)";
 
   return destination.name;
 }
@@ -206,8 +224,8 @@ function getDestinationItinerary(destination: DestinationWithOptionalRoute) {
 
 export default function HomeClient() {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
-  const [tripType, setTripType] = useState("All");
+  const [category, setCategory] = useState("All travel vibes");
+  const [tripType, setTripType] = useState("All experience types");
   const [duration, setDuration] = useState("any");
   const [selectedSlug, setSelectedSlug] = useState(destinations[0].slug);
 
@@ -223,10 +241,10 @@ export default function HomeClient() {
         destination.state.toLowerCase().includes(query.toLowerCase());
 
       const matchesCategory =
-        category === "All" || destination.categories.includes(category);
+        category === "All travel vibes" || destination.categories.includes(category);
 
       const matchesTripType =
-        tripType === "All" || destination.tripTypes.includes(tripType);
+        tripType === "All experience types" || destination.tripTypes.includes(tripType);
 
       const matchesDuration =
         duration === "any" || destination.durationMin <= Number(duration);
@@ -257,11 +275,8 @@ export default function HomeClient() {
     <main className="min-h-screen bg-[#F7F8FA] text-[#172033]">
       <header className="sticky top-0 z-30 border-b border-[#DDE6F3] bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="DeutschScanner" className="h-12 w-auto" />
-            <p className="hidden text-sm font-semibold text-[#0B3B82] md:block">
-              Discover where your Deutschlandticket can take you.
-            </p>
+          <div className="flex items-center">
+            <img src="/logo.png" alt="DeutschScanner" className="h-72 w-auto" />
           </div>
 
           <nav className="flex items-center gap-2 text-sm font-semibold text-[#0B3B82]">
@@ -286,6 +301,7 @@ export default function HomeClient() {
           </p>
 
           <div className="mt-6 grid gap-3">
+            <label className="text-sm font-bold text-[#0B3B82]">Search destination</label>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -293,6 +309,7 @@ export default function HomeClient() {
               className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
             />
 
+            <label className="text-sm font-bold text-[#0B3B82]">Departure / arrival</label>
             <select
               value={timeMode}
               onChange={(event) => setTimeMode(event.target.value)}
@@ -302,20 +319,7 @@ export default function HomeClient() {
               <option value="arrive">Arrival time</option>
             </select>
 
-            <input
-              type="date"
-              value={travelDate}
-              onChange={(event) => setTravelDate(event.target.value)}
-              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-            />
-
-            <input
-              type="time"
-              value={travelTime}
-              onChange={(event) => setTravelTime(event.target.value)}
-              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-            />
-
+            <label className="text-sm font-bold text-[#0B3B82]">Travel duration</label>
             <select
               value={duration}
               onChange={(event) => setDuration(event.target.value)}
@@ -328,6 +332,7 @@ export default function HomeClient() {
               ))}
             </select>
 
+            <label className="text-sm font-bold text-[#0B3B82]">Travel vibe</label>
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
@@ -338,6 +343,7 @@ export default function HomeClient() {
               ))}
             </select>
 
+            <label className="text-sm font-bold text-[#0B3B82]">Experience vibe</label>
             <select
               value={tripType}
               onChange={(event) => setTripType(event.target.value)}
@@ -348,9 +354,25 @@ export default function HomeClient() {
               ))}
             </select>
 
+            <label className="text-sm font-bold text-[#0B3B82]">Travel date</label>
+            <input
+              type="date"
+              value={travelDate}
+              onChange={(event) => setTravelDate(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            />
+
+            <label className="text-sm font-bold text-[#0B3B82]">Time of departure</label>
+            <input
+              type="time"
+              value={travelTime}
+              onChange={(event) => setTravelTime(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            />
+
             <button
               onClick={handleSearch}
-              className="rounded-full bg-[#0B3B82] px-6 py-4 font-bold text-white shadow-sm transition hover:bg-[#082D63]"
+              className="mt-2 rounded-full bg-[#0B3B82] px-6 py-4 font-bold text-white shadow-sm transition hover:bg-[#082D63]"
             >
               Search destinations
             </button>
