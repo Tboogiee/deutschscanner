@@ -18,19 +18,6 @@ type DestinationWithOptionalRoute = Destination & {
   image?: string;
 };
 
-const categories = [
-  "All travel vibes",
-  "City",
-  "Architecture",
-  "Lakes",
-  "Rivers",
-  "Hiking",
-  "History",
-  "Nature",
-  "Coast",
-  "Wellness",
-];
-
 const tripTypes = [
   "All experience types",
   "Half-Day",
@@ -47,6 +34,19 @@ const durationOptions = [
   { label: "Under 4 hours", value: "240" },
 ];
 
+const categories = [
+  "All travel vibes",
+  "City",
+  "Architecture",
+  "Lakes",
+  "Rivers",
+  "Hiking",
+  "History",
+  "Nature",
+  "Coast",
+  "Wellness",
+];
+
 const imageBySlug: Record<string, string> = {
   "waren-mueritz": "/destinations/waren.jpg",
   waren: "/destinations/waren.jpg",
@@ -56,6 +56,42 @@ const imageBySlug: Record<string, string> = {
   luebbenau: "/destinations/luebbenau.jpg",
   dresden: "/destinations/dresden.jpg",
   "werder-havel": "/destinations/werder.jpg",
+};
+
+const dbStationBySlug: Record<string, string> = {
+  potsdam: "Potsdam Hbf",
+  "werder-havel": "Werder(Havel)",
+  "brandenburg-havel": "Brandenburg Hbf",
+  "beelitz-heilstaetten": "Beelitz-Heilstätten",
+  "bad-belzig": "Bad Belzig",
+  "bad-saarow": "Bad Saarow",
+  "frankfurt-oder": "Frankfurt(Oder)",
+  eberswalde: "Eberswalde Hbf",
+  chorin: "Chorin",
+  angermuende: "Angermünde",
+  templin: "Templin Stadt",
+  neustrelitz: "Neustrelitz Hbf",
+  "waren-mueritz": "Waren(Müritz)",
+  waren: "Waren(Müritz)",
+  luebbenau: "Lübbenau(Spreewald)",
+  luebben: "Lübben(Spreewald)",
+  cottbus: "Cottbus Hbf",
+  wittenberg: "Lutherstadt Wittenberg Hbf",
+  dessau: "Dessau Hbf",
+  magdeburg: "Magdeburg Hbf",
+  leipzig: "Leipzig Hbf",
+  dresden: "Dresden Hbf",
+  wittenberge: "Wittenberge",
+  rathenow: "Rathenow",
+  neuruppin: "Neuruppin Rheinsberger Tor",
+  "koenigs-wusterhausen": "Königs Wusterhausen",
+  "wunsdorf-waldstadt": "Wünsdorf-Waldstadt",
+  schwerin: "Schwerin Hbf",
+  rostock: "Rostock Hbf",
+  warnemuende: "Warnemünde",
+  stralsund: "Stralsund Hbf",
+  greifswald: "Greifswald",
+  wismar: "Wismar",
 };
 
 const longDescriptions: Record<string, string> = {
@@ -153,21 +189,11 @@ function lineBadgeClass(type: TrainRouteStep["type"]) {
 }
 
 function getBestDestinationStation(destination: DestinationWithOptionalRoute) {
-  const lastRouteStep = destination.route?.[destination.route.length - 1];
-
-  if (lastRouteStep?.to) return lastRouteStep.to;
-
-  if (destination.name === "Potsdam") return "Potsdam Hbf";
-  if (destination.name === "Rostock") return "Rostock Hbf";
-  if (destination.name === "Dresden") return "Dresden Hbf";
-  if (destination.name === "Leipzig") return "Leipzig Hbf";
-  if (destination.name === "Schwerin") return "Schwerin Hbf";
-  if (destination.name === "Werder (Havel)") return "Werder (Havel)";
-
-  return destination.name;
+  return dbStationBySlug[destination.slug] ?? destination.name;
 }
 
 function buildDbUrl(
+  departureStation: string,
   destination: DestinationWithOptionalRoute,
   date: string,
   time: string,
@@ -176,11 +202,15 @@ function buildDbUrl(
   const destinationStation = getBestDestinationStation(destination);
   const hashParams = new URLSearchParams();
 
-  hashParams.set("soid", "O=Berlin Hbf");
-  hashParams.set("zoid", `O=${destinationStation}`);
-  hashParams.set("so", "Berlin Hbf");
+  hashParams.set("sts", "true");
+  hashParams.set("so", departureStation);
   hashParams.set("zo", destinationStation);
+  hashParams.set("soid", `O=${departureStation}`);
+  hashParams.set("zoid", `O=${destinationStation}`);
+  hashParams.set("sot", "ST");
+  hashParams.set("zot", "ST");
   hashParams.set("hd", `${date}T${time}:00`);
+  hashParams.set("hza", timeMode === "arrive" ? "A" : "D");
   hashParams.set("ar", timeMode === "arrive" ? "true" : "false");
   hashParams.set("s", "true");
   hashParams.set("d", "false");
@@ -223,10 +253,11 @@ function getDestinationItinerary(destination: DestinationWithOptionalRoute) {
 }
 
 export default function HomeClient() {
+  const [departureStation, setDepartureStation] = useState("Berlin Hbf");
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All travel vibes");
   const [tripType, setTripType] = useState("All experience types");
   const [duration, setDuration] = useState("any");
+  const [category, setCategory] = useState("All travel vibes");
   const [selectedSlug, setSelectedSlug] = useState(destinations[0].slug);
 
   const [travelDate, setTravelDate] = useState(todayISO());
@@ -240,18 +271,18 @@ export default function HomeClient() {
         destination.summary.toLowerCase().includes(query.toLowerCase()) ||
         destination.state.toLowerCase().includes(query.toLowerCase());
 
-      const matchesCategory =
-        category === "All travel vibes" || destination.categories.includes(category);
-
       const matchesTripType =
         tripType === "All experience types" || destination.tripTypes.includes(tripType);
 
       const matchesDuration =
         duration === "any" || destination.durationMin <= Number(duration);
 
-      return matchesQuery && matchesCategory && matchesTripType && matchesDuration;
+      const matchesCategory =
+        category === "All travel vibes" || destination.categories.includes(category);
+
+      return matchesQuery && matchesTripType && matchesDuration && matchesCategory;
     });
-  }, [query, category, tripType, duration]);
+  }, [query, tripType, duration, category]);
 
   const selectedDestination =
     (destinations.find((destination) => destination.slug === selectedSlug) ??
@@ -263,7 +294,13 @@ export default function HomeClient() {
       ? selectedDestination.route
       : getFallbackRoute(selectedDestination);
 
-  const dbUrl = buildDbUrl(selectedDestination, travelDate, travelTime, timeMode);
+  const dbUrl = buildDbUrl(
+    departureStation,
+    selectedDestination,
+    travelDate,
+    travelTime,
+    timeMode,
+  );
 
   function handleSearch() {
     if (filteredDestinations[0]) {
@@ -297,17 +334,28 @@ export default function HomeClient() {
           </h1>
 
           <p className="mt-2 text-[#5f6b85]">
-            Choose a vibe, travel window, and destination. Then open the route in DB.
+            Choose your station, trip style, travel window, and destination.
           </p>
 
           <div className="mt-6 grid gap-3">
-            <label className="text-sm font-bold text-[#0B3B82]">Search destination</label>
+            <label className="text-sm font-bold text-[#0B3B82]">Departure station</label>
             <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search Waren, lakes, coast, history..."
+              value={departureStation}
+              onChange={(event) => setDepartureStation(event.target.value)}
+              placeholder="Berlin Hbf"
               className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
             />
+
+            <label className="text-sm font-bold text-[#0B3B82]">Trip type</label>
+            <select
+              value={tripType}
+              onChange={(event) => setTripType(event.target.value)}
+              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
+            >
+              {tripTypes.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
 
             <label className="text-sm font-bold text-[#0B3B82]">Travel duration</label>
             <select
@@ -322,7 +370,7 @@ export default function HomeClient() {
               ))}
             </select>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Travel vibe</label>
+            <label className="text-sm font-bold text-[#0B3B82]">Experience vibe</label>
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
@@ -333,16 +381,13 @@ export default function HomeClient() {
               ))}
             </select>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Experience vibe</label>
-            <select
-              value={tripType}
-              onChange={(event) => setTripType(event.target.value)}
+            <label className="text-sm font-bold text-[#0B3B82]">Search destination</label>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search Waren, lakes, coast, history..."
               className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-            >
-              {tripTypes.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
+            />
 
             <div className="mt-3 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-4">
               <h3 className="text-base font-black text-[#0B3B82]">
@@ -386,7 +431,7 @@ export default function HomeClient() {
               onClick={handleSearch}
               className="mt-2 rounded-full bg-[#0B3B82] px-6 py-4 font-bold text-white shadow-sm transition hover:bg-[#082D63]"
             >
-              Search destinations
+              Explore
             </button>
           </div>
 
