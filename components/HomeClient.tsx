@@ -56,6 +56,10 @@ const imageBySlug: Record<string, string> = {
   luebbenau: "/destinations/luebbenau.jpg",
   dresden: "/destinations/dresden.jpg",
   "werder-havel": "/destinations/werder.jpg",
+  "bad-saarow": "/destinations/bad-saarow.jpg",
+  angermuende: "/destinations/angermuende.jpg",
+  templin: "/destinations/templin.jpg",
+  neustrelitz: "/destinations/neustrelitz.jpg",
 };
 
 const dbStationBySlug: Record<string, string> = {
@@ -316,11 +320,17 @@ export default function HomeClient() {
             <img src="/logo.png" alt="DeutschScanner" className="h-72 w-auto" />
           </div>
 
-          <nav className="flex items-center gap-2 text-sm font-semibold text-[#0B3B82]">
-            <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">News</button>
-            <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">Destinations</button>
-            <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">Contact</button>
-            <span className="ml-2 rounded-full bg-[#FFF1E3] px-4 py-2 text-[#D96A00]">
+          <nav className="flex items-center gap-4 text-lg font-bold text-[#0B3B82]">
+            <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">
+              News
+            </button>
+            <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">
+              Destinations
+            </button>
+            <button className="rounded-full px-4 py-2 hover:bg-[#F1F5FB]">
+              Contact
+            </button>
+            <span className="ml-2 rounded-full bg-[#FFF1E3] px-5 py-2 text-[#D96A00]">
               Hello Roy!
             </span>
           </nav>
@@ -338,7 +348,9 @@ export default function HomeClient() {
           </p>
 
           <div className="mt-6 grid gap-3">
-            <label className="text-sm font-bold text-[#0B3B82]">Departure station</label>
+            <label className="text-sm font-bold text-[#0B3B82]">
+              Departure station
+            </label>
             <input
               value={departureStation}
               onChange={(event) => setDepartureStation(event.target.value)}
@@ -357,7 +369,9 @@ export default function HomeClient() {
               ))}
             </select>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Travel duration</label>
+            <label className="text-sm font-bold text-[#0B3B82]">
+              Travel duration
+            </label>
             <select
               value={duration}
               onChange={(event) => setDuration(event.target.value)}
@@ -370,7 +384,9 @@ export default function HomeClient() {
               ))}
             </select>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Experience vibe</label>
+            <label className="text-sm font-bold text-[#0B3B82]">
+              Experience vibe
+            </label>
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
@@ -381,7 +397,9 @@ export default function HomeClient() {
               ))}
             </select>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Search destination</label>
+            <label className="text-sm font-bold text-[#0B3B82]">
+              Search destination
+            </label>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -407,7 +425,9 @@ export default function HomeClient() {
                   <option value="arrive">Arrival time</option>
                 </select>
 
-                <label className="text-sm font-bold text-[#0B3B82]">Travel date</label>
+                <label className="text-sm font-bold text-[#0B3B82]">
+                  Travel date
+                </label>
                 <input
                   type="date"
                   value={travelDate}
@@ -549,18 +569,6 @@ export default function HomeClient() {
               {getDestinationDescription(selectedDestination)}
             </p>
 
-            <section className="mt-6 rounded-3xl bg-[#F7FAFD] p-6">
-              <h3 className="text-4xl font-black text-[#0B3B82]">
-                What to do
-              </h3>
-
-              <ol className="mt-5 list-decimal space-y-4 pl-7 text-lg font-semibold leading-relaxed text-[#334155]">
-                {getDestinationItinerary(selectedDestination).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ol>
-            </section>
-
             <section className="mt-6 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-5">
               <h3 className="mb-4 text-xl font-bold text-[#0B3B82]">
                 Train route preview
@@ -602,6 +610,18 @@ export default function HomeClient() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            <section className="mt-6 rounded-3xl bg-[#F7FAFD] p-6">
+              <h3 className="text-4xl font-black text-[#0B3B82]">
+                What to do
+              </h3>
+
+              <ol className="mt-5 list-decimal space-y-4 pl-7 text-lg font-semibold leading-relaxed text-[#334155]">
+                {getDestinationItinerary(selectedDestination).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ol>
             </section>
           </article>
         </section>
