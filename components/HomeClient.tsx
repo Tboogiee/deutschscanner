@@ -273,7 +273,7 @@ export default function HomeClient() {
 
   return (
     <main className="min-h-screen bg-[#F7F8FA] text-[#172033]">
-      <header className="sticky top-0 z-30 border-b border-[#DDE6F3] bg-white/95 backdrop-blur">
+      <header className="border-b border-[#DDE6F3] bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center">
             <img src="/logo.png" alt="DeutschScanner" className="h-72 w-auto" />
@@ -308,16 +308,6 @@ export default function HomeClient() {
               placeholder="Search Waren, lakes, coast, history..."
               className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
             />
-
-            <label className="text-sm font-bold text-[#0B3B82]">Departure / arrival</label>
-            <select
-              value={timeMode}
-              onChange={(event) => setTimeMode(event.target.value)}
-              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-            >
-              <option value="depart">Departure time</option>
-              <option value="arrive">Arrival time</option>
-            </select>
 
             <label className="text-sm font-bold text-[#0B3B82]">Travel duration</label>
             <select
@@ -354,21 +344,43 @@ export default function HomeClient() {
               ))}
             </select>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Travel date</label>
-            <input
-              type="date"
-              value={travelDate}
-              onChange={(event) => setTravelDate(event.target.value)}
-              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-            />
+            <div className="mt-3 rounded-3xl border border-[#DDE6F3] bg-[#F7FAFD] p-4">
+              <h3 className="text-base font-black text-[#0B3B82]">
+                Departure window
+              </h3>
 
-            <label className="text-sm font-bold text-[#0B3B82]">Time of departure</label>
-            <input
-              type="time"
-              value={travelTime}
-              onChange={(event) => setTravelTime(event.target.value)}
-              className="rounded-2xl border border-[#D8E2F0] bg-[#F7FAFD] px-4 py-4 outline-none focus:border-[#FF8A1F]"
-            />
+              <div className="mt-3 grid gap-3">
+                <label className="text-sm font-bold text-[#0B3B82]">
+                  Departure / arrival
+                </label>
+                <select
+                  value={timeMode}
+                  onChange={(event) => setTimeMode(event.target.value)}
+                  className="rounded-2xl border border-[#D8E2F0] bg-white px-4 py-4 outline-none focus:border-[#FF8A1F]"
+                >
+                  <option value="depart">Departure time</option>
+                  <option value="arrive">Arrival time</option>
+                </select>
+
+                <label className="text-sm font-bold text-[#0B3B82]">Travel date</label>
+                <input
+                  type="date"
+                  value={travelDate}
+                  onChange={(event) => setTravelDate(event.target.value)}
+                  className="rounded-2xl border border-[#D8E2F0] bg-white px-4 py-4 outline-none focus:border-[#FF8A1F]"
+                />
+
+                <label className="text-sm font-bold text-[#0B3B82]">
+                  Time of departure
+                </label>
+                <input
+                  type="time"
+                  value={travelTime}
+                  onChange={(event) => setTravelTime(event.target.value)}
+                  className="rounded-2xl border border-[#D8E2F0] bg-white px-4 py-4 outline-none focus:border-[#FF8A1F]"
+                />
+              </div>
+            </div>
 
             <button
               onClick={handleSearch}
@@ -492,12 +504,12 @@ export default function HomeClient() {
               {getDestinationDescription(selectedDestination)}
             </p>
 
-            <section className="mt-6 rounded-3xl bg-[#F7FAFD] p-5">
-              <h3 className="text-2xl font-black text-[#0B3B82]">
+            <section className="mt-6 rounded-3xl bg-[#F7FAFD] p-6">
+              <h3 className="text-4xl font-black text-[#0B3B82]">
                 What to do
               </h3>
 
-              <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-[#5f6b85]">
+              <ol className="mt-5 list-decimal space-y-4 pl-7 text-lg font-semibold leading-relaxed text-[#334155]">
                 {getDestinationItinerary(selectedDestination).map((item) => (
                   <li key={item}>{item}</li>
                 ))}
