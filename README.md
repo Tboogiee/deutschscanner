@@ -1,4 +1,15 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DeutschScanner
+
+DeutschScanner is a Deutschlandticket-first destination explorer for trips from Berlin. It combines curated place guides, route previews, live Deutsche Bahn handoff, accommodation and restaurant searches, and a Supabase-backed travel passport.
+
+## Supabase accounts
+
+1. Create a Supabase project.
+2. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL Editor.
+3. Copy `.env.example` to `.env.local` and add the project URL and publishable key.
+4. In Supabase Auth URL Configuration, allow the production and local callback URLs documented in [`supabase/README.md`](supabase/README.md).
+
+The app uses Supabase Auth and its browser-accessible REST API. Row-level security ensures profiles, favorites, and visits can only be accessed by their owner. Never expose a Supabase secret or service-role key to this app.
 
 ## Getting Started
 
