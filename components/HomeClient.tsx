@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MapWrapper from "@/components/MapWrapper";
 import {
   destinations,
@@ -113,6 +113,80 @@ function stopLabel(route: RouteOption) {
   return intermediateStops === 1 ? "1 stop on the way" : `${intermediateStops} stops on the way`;
 }
 
+type PlaceGuide = {
+  intro: string;
+  highlights: string[];
+  bestFor: string;
+  idealStay: string;
+  localTip: string;
+};
+
+const placeGuides: Record<string, PlaceGuide> = {
+  potsdam: {
+    intro: "A graceful escape where royal gardens, lakeside paths, and handsome old streets fit naturally into one unhurried day.",
+    highlights: ["Walk the gardens around Sanssouci", "Pause for coffee in the Dutch Quarter", "Finish beside the Havel before the train home"],
+    bestFor: "Palaces & slow afternoons",
+    idealStay: "Full day",
+    localTip: "Start with the palace grounds while they are quiet, then work back toward the old town.",
+  },
+  luebbenau: {
+    intro: "The gateway to the Spreewald pairs storybook lanes with waterways, forest shade, and a pace that feels far from the city.",
+    highlights: ["Join a traditional punt or rent a kayak", "Follow waterside trails through the biosphere", "Try local Spreewald pickles at the harbor"],
+    bestFor: "Waterways & nature",
+    idealStay: "Full day",
+    localTip: "Reserve a boat trip on warm weekends and leave a little time to explore beyond the harbor.",
+  },
+  rostock: {
+    intro: "A Hanseatic city break with brick-gothic streets, a lively harbor, and the Baltic coast close enough to add sea air to the day.",
+    highlights: ["Explore the old town and Neuer Markt", "Walk Rostock's city harbor", "Continue to Warnemünde if time allows"],
+    bestFor: "City & seaside",
+    idealStay: "Long day or weekend",
+    localTip: "For a beach extension, keep enough time for the local connection between Rostock and Warnemünde.",
+  },
+  schwerin: {
+    intro: "A compact lakeside capital centered on one of Germany's most theatrical castles, with gardens and old-town streets made for wandering.",
+    highlights: ["Circle Schwerin Castle and its gardens", "Stroll through the old town", "Take a quiet lakeside break before returning"],
+    bestFor: "Architecture & lakes",
+    idealStay: "Full day",
+    localTip: "The castle looks especially striking from the paths across the water—save time for the longer loop.",
+  },
+  dresden: {
+    intro: "Grand riverside architecture, world-class collections, and characterful neighborhoods make Dresden rewarding from morning until evening.",
+    highlights: ["Walk the historic center and Brühl's Terrace", "Choose one major museum rather than rushing several", "Cross the Elbe for cafés in Neustadt"],
+    bestFor: "Art & architecture",
+    idealStay: "Long day or weekend",
+    localTip: "Book timed museum entry in advance and build the rest of your route around it.",
+  },
+  "waren-mueritz": {
+    intro: "A relaxed base on Germany's largest inland lake, ideal for open-water views, cycling, and an easy dose of national-park nature.",
+    highlights: ["Walk Waren's harbor and old town", "Follow a lakeside cycling or walking route", "Add a Müritz National Park excursion"],
+    bestFor: "Lakes & outdoor time",
+    idealStay: "Full day or weekend",
+    localTip: "Check seasonal boat and bus timetables before choosing the farthest point on your route.",
+  },
+  "bad-saarow": {
+    intro: "A low-effort lake escape where wooded shoreline, spa time, and quiet cafés create an easy reset from Berlin.",
+    highlights: ["Walk the Scharmützelsee promenade", "Book a thermal spa session", "Take a gentle forest or lakeside loop"],
+    bestFor: "Wellness & water",
+    idealStay: "Half or full day",
+    localTip: "Reserve spa entry before departure, especially on colder weekends.",
+  },
+};
+
+function getPlaceGuide(destination: Destination): PlaceGuide {
+  return placeGuides[destination.slug] ?? {
+    intro: destination.summary,
+    highlights: [
+      `Explore ${destination.name}'s center and independent cafés.`,
+      `Shape the day around ${destination.categories.slice(0, 2).join(" and ").toLowerCase()}.`,
+      "Leave room for one unplanned walk before the return train.",
+    ],
+    bestFor: destination.categories.slice(0, 2).join(" & "),
+    idealStay: destination.tripTypes[0] ?? "Day trip",
+    localTip: "Check the final regional connection before setting out so the return stays relaxed.",
+  };
+}
+
 export default function HomeClient() {
   const [query, setQuery] = useState("");
   const [vibe, setVibe] = useState("All");
@@ -124,6 +198,7 @@ export default function HomeClient() {
   const [selectedSlug, setSelectedSlug] = useState("potsdam");
   const [selectedRouteId, setSelectedRouteId] = useState("potsdam-re1");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const filteredDestinations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -155,10 +230,33 @@ export default function HomeClient() {
     selectedDestination.routeOptions[0];
 
   const dbUrl = buildDbUrl(departure, selectedDestination, travelDate, travelTime);
+  const placeGuide = getPlaceGuide(selectedDestination);
+
+  useEffect(() => {
+    if (!detailOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDetailOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [detailOpen]);
 
   function selectDestination(destination: Destination) {
     setSelectedSlug(destination.slug);
     setSelectedRouteId(destination.routeOptions[0]?.id ?? "");
+  }
+
+  function openDestination(destination: Destination) {
+    selectDestination(destination);
+    setDetailOpen(true);
   }
 
   function toggleFavorite(slug: string) {
@@ -173,8 +271,7 @@ export default function HomeClient() {
     const pool = filteredDestinations.length > 0 ? filteredDestinations : destinations;
     const currentIndex = pool.findIndex((destination) => destination.slug === selectedSlug);
     const nextDestination = pool[(currentIndex + 5) % pool.length];
-    selectDestination(nextDestination);
-    document.getElementById("discover")?.scrollIntoView({ behavior: "smooth" });
+    openDestination(nextDestination);
   }
 
   function resetFilters() {
@@ -304,12 +401,12 @@ export default function HomeClient() {
                     <button
                       className="card-image"
                       type="button"
-                      onClick={() => selectDestination(destination)}
+                      onClick={() => openDestination(destination)}
                       aria-label={`View ${destination.name}`}
                     >
                       <Image
                         src={destinationImage(destination)}
-                        alt=""
+                        alt={`${destination.name} travel destination`}
                         fill
                         sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 33vw"
                       />
@@ -325,7 +422,7 @@ export default function HomeClient() {
                     >
                       {isFavorite ? "♥" : "♡"}
                     </button>
-                    <button className="card-copy" type="button" onClick={() => selectDestination(destination)}>
+                    <button className="card-copy" type="button" onClick={() => openDestination(destination)}>
                       <span>{destination.state}</span>
                       <h3>{destination.name}</h3>
                       <p>{destination.summary}</p>
@@ -368,7 +465,7 @@ export default function HomeClient() {
                 selectedRoute={selectedRoute}
                 onSelect={(slug) => {
                   const destination = destinations.find((item) => item.slug === slug);
-                  if (destination) selectDestination(destination);
+                  if (destination) openDestination(destination);
                 }}
               />
               <div className="map-key"><span /> Curated route preview</div>
@@ -449,6 +546,149 @@ export default function HomeClient() {
           <p>*Regional transport eligibility varies. Check the current Deutschlandticket conditions and live journey details before departure.</p>
         </div>
       </footer>
+
+      {detailOpen && (
+        <div
+          className="place-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDetailOpen(false);
+          }}
+        >
+          <section
+            className="place-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="place-modal-title"
+          >
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => setDetailOpen(false)}
+              aria-label="Close destination details"
+              autoFocus
+            >
+              ×
+            </button>
+
+            <div className="modal-hero">
+              <Image
+                src={destinationImage(selectedDestination)}
+                alt={`${selectedDestination.name} landscape`}
+                fill
+                priority
+                sizes="(max-width: 900px) 100vw, 1180px"
+              />
+              <div className="modal-hero-shade" />
+              <div className="modal-hero-copy">
+                <p>{selectedDestination.state}</p>
+                <h2 id="place-modal-title">{selectedDestination.name}</h2>
+                <div>
+                  <span className={`line-badge ${lineClass(selectedRoute.type)}`}>{selectedRoute.line}</span>
+                  <span>{selectedRoute.duration}</span>
+                  <span>{selectedDestination.transfers}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className={favorites.includes(selectedDestination.slug) ? "modal-save active" : "modal-save"}
+                onClick={() => toggleFavorite(selectedDestination.slug)}
+                aria-pressed={favorites.includes(selectedDestination.slug)}
+              >
+                {favorites.includes(selectedDestination.slug) ? "♥ Saved" : "♡ Save trip"}
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-intro-grid">
+                <div>
+                  <p className="modal-kicker">Why it is worth the journey</p>
+                  <p className="modal-intro">{placeGuide.intro}</p>
+                </div>
+                <div className="modal-facts">
+                  <article><span>Best for</span><strong>{placeGuide.bestFor}</strong></article>
+                  <article><span>Ideal stay</span><strong>{placeGuide.idealStay}</strong></article>
+                  <article><span>From Berlin</span><strong>{selectedDestination.time}</strong></article>
+                </div>
+              </div>
+
+              <div className="modal-highlights">
+                {placeGuide.highlights.map((highlight, index) => (
+                  <article key={highlight}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <p>{highlight}</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="modal-route-heading">
+                <div>
+                  <p className="modal-kicker">Your route</p>
+                  <h3>From platform to place</h3>
+                </div>
+                <p>{stopLabel(selectedRoute)} · {selectedDestination.transfers}</p>
+              </div>
+
+              <div className="modal-route-layout">
+                <div className="modal-map">
+                  <MapWrapper
+                    points={[selectedDestination]}
+                    selectedSlug={selectedDestination.slug}
+                    selectedRoute={selectedRoute}
+                    onSelect={() => undefined}
+                  />
+                  <div className="map-key"><span /> Route preview</div>
+                </div>
+
+                <aside className="modal-route-card">
+                  <div className="route-options" role="group" aria-label="Choose a route">
+                    {selectedDestination.routeOptions.map((route) => (
+                      <button
+                        key={route.id}
+                        type="button"
+                        onClick={() => setSelectedRouteId(route.id)}
+                        className={selectedRoute.id === route.id ? "route-choice active" : "route-choice"}
+                        aria-pressed={selectedRoute.id === route.id}
+                      >
+                        <span className={`line-badge ${lineClass(route.type)}`}>{route.line}</span>
+                        <span><strong>{route.duration}</strong><small>{route.label}</small></span>
+                        <span aria-hidden="true">{selectedRoute.id === route.id ? "●" : "○"}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <ol className="stop-list modal-stop-list">
+                    {selectedRoute.stops.map((stop, index) => (
+                      <li key={`${stop.name}-modal-${index}`}>
+                        <span className={index === 0 || index === selectedRoute.stops.length - 1 ? "stop-dot endpoint" : "stop-dot"} />
+                        <div>
+                          <strong>{stop.name}</strong>
+                          <small>{index === 0 ? "Start" : index === selectedRoute.stops.length - 1 ? "Your escape" : `Stop ${index}`}</small>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </aside>
+              </div>
+
+              <div className="modal-planner">
+                <div className="modal-tip">
+                  <span aria-hidden="true">✦</span>
+                  <div><strong>A useful local note</strong><p>{placeGuide.localTip}</p></div>
+                </div>
+                <div className="departure-controls">
+                  <label><span>From</span><input value={departure} onChange={(event) => setDeparture(event.target.value)} /></label>
+                  <label><span>Date</span><input type="date" value={travelDate} onChange={(event) => setTravelDate(event.target.value)} /></label>
+                  <label><span>Time</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
+                </div>
+                <a className="db-button" href={dbUrl} target="_blank" rel="noreferrer">
+                  <span>DB</span> Check live journey on bahn.de <b>↗</b>
+                </a>
+                <p className="route-disclaimer">This is a curated route preview. Confirm live services, platform changes, and ticket validity before travel.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
