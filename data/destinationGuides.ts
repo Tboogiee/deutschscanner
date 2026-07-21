@@ -1,3 +1,5 @@
+import { expandedDestinationGuides } from "@/data/expandedDestinationGuides";
+
 export type GuidePlace = {
   name: string;
   detail: string;
@@ -507,6 +509,7 @@ export const destinationGuides: Record<string, DestinationGuide> = {
       { time: "Evening", title: "Lakeside finale", detail: "Return to the castle shore for late light before heading to the train." },
     ],
   },
+  ...expandedDestinationGuides,
 };
 
 export function getDestinationGuide(slug: string) {

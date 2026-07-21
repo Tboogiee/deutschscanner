@@ -1,3 +1,5 @@
+import { expandedDestinations } from "@/data/expandedDestinations";
+
 export type TransitType = "S" | "U" | "RE" | "RB" | "Bus" | "Tram";
 
 export type Coordinate = [number, number];
@@ -557,4 +559,5 @@ export const destinations: Destination[] = [
       ]),
     ],
   },
+  ...expandedDestinations,
 ];
