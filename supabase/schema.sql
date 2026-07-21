@@ -33,6 +33,10 @@ alter table public.profiles enable row level security;
 alter table public.favorites enable row level security;
 alter table public.visits enable row level security;
 
+grant select, insert, update on table public.profiles to authenticated;
+grant select, insert, delete on table public.favorites to authenticated;
+grant select, insert, update, delete on table public.visits to authenticated;
+
 drop policy if exists "Users can read their profile" on public.profiles;
 create policy "Users can read their profile"
   on public.profiles for select
@@ -44,6 +48,12 @@ create policy "Users can update their profile"
   on public.profiles for update
   to authenticated
   using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
+
+drop policy if exists "Users can create their profile" on public.profiles;
+create policy "Users can create their profile"
+  on public.profiles for insert
+  to authenticated
   with check ((select auth.uid()) = id);
 
 drop policy if exists "Users manage their favorites" on public.favorites;
