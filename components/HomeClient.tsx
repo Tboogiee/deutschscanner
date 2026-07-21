@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AccountPanel from "@/components/AccountPanel";
+import CommunitySection from "@/components/CommunitySection";
 import MapWrapper from "@/components/MapWrapper";
 import {
   destinations,
@@ -12,35 +13,40 @@ import {
   type TransitType,
 } from "@/data/destinations";
 import { getDestinationGuide } from "@/data/destinationGuides";
+import { destinationSummary } from "@/data/germanSummaries";
+import {
+  departureStations,
+  destinationDistance,
+  stationByName,
+} from "@/data/stations";
 import { useTravelAccount } from "@/hooks/useTravelAccount";
+import { translate, type Language, type TranslationKey } from "@/lib/i18n";
 
-const vibes = ["All", "Lakes", "Nature", "City", "History", "Coast", "Wellness"];
+const vibes = [
+  { value: "All", label: "all" },
+  { value: "Lakes", label: "lakes" },
+  { value: "Nature", label: "nature" },
+  { value: "City", label: "city" },
+  { value: "History", label: "history" },
+  { value: "Coast", label: "coast" },
+  { value: "Wellness", label: "wellness" },
+] as const satisfies ReadonlyArray<{ value: string; label: TranslationKey }>;
 
 const tripTypes = [
-  "All trips",
-  "Half-Day",
-  "Day Trip",
-  "Weekend Trip",
-  "Multi Day Trip",
-];
+  { value: "All trips", label: "allTrips" },
+  { value: "Half-Day", label: "halfDay" },
+  { value: "Day Trip", label: "dayTrip" },
+  { value: "Weekend Trip", label: "weekendTrip" },
+  { value: "Multi Day Trip", label: "multiDayTrip" },
+] as const satisfies ReadonlyArray<{ value: string; label: TranslationKey }>;
 
 const durationOptions = [
-  { label: "Any journey", value: "any" },
-  { label: "Under 1 hour", value: "60" },
-  { label: "Under 2 hours", value: "120" },
-  { label: "Under 3 hours", value: "180" },
-  { label: "Under 4 hours", value: "240" },
-];
-
-const departureStations = [
-  { name: "Berlin Hbf", coordinates: [52.525589, 13.369549] as const },
-  { name: "Berlin Ostkreuz", coordinates: [52.503, 13.4694] as const },
-  { name: "Berlin Alexanderplatz", coordinates: [52.5219, 13.4132] as const },
-  { name: "Berlin Südkreuz", coordinates: [52.475, 13.3653] as const },
-  { name: "Berlin Gesundbrunnen", coordinates: [52.5486, 13.3889] as const },
-  { name: "Berlin Zoologischer Garten", coordinates: [52.5072, 13.3323] as const },
-  { name: "Berlin-Spandau", coordinates: [52.5347, 13.1973] as const },
-];
+  { label: "anyJourney", value: "any" },
+  { label: "under1", value: "60" },
+  { label: "under2", value: "120" },
+  { label: "under3", value: "180" },
+  { label: "under4", value: "240" },
+] as const satisfies ReadonlyArray<{ value: string; label: TranslationKey }>;
 
 const localImages: Record<string, string> = {
   potsdam: "/destinations/potsdam.jpg",
@@ -146,7 +152,7 @@ function buildDbUrl(
   date: string,
   time: string,
 ) {
-  const departureStation = departureStations.find((station) => station.name === departure) ?? departureStations[0];
+  const departureStation = stationByName(departure);
   const destinationStop = destination.routeOptions[0]?.stops.at(-1);
   const destinationStationName = destinationStop?.name ?? destination.name;
   const destinationCoordinates = destinationStop?.coordinates ?? [destination.lat, destination.lng];
@@ -200,6 +206,7 @@ function stopLabel(route: RouteOption) {
 
 export default function HomeClient() {
   const account = useTravelAccount();
+  const [language, setLanguage] = useState<Language>("en");
   const [query, setQuery] = useState("");
   const [vibe, setVibe] = useState("All");
   const [tripType, setTripType] = useState("All trips");
@@ -215,6 +222,8 @@ export default function HomeClient() {
   const [stayCheckOut, setStayCheckOut] = useState(addDaysISO(todayISO(), 1));
   const [stayGuests, setStayGuests] = useState("2");
   const favorites = account.favorites;
+  const departureStation = useMemo(() => stationByName(departure), [departure]);
+  const t = (key: TranslationKey) => translate(language, key);
 
   const filteredDestinations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -233,10 +242,16 @@ export default function HomeClient() {
         (!normalizedQuery || searchable.includes(normalizedQuery)) &&
         (vibe === "All" || destination.categories.includes(vibe)) &&
         (tripType === "All trips" || destination.tripTypes.includes(tripType)) &&
-        (duration === "any" || destination.durationMin <= Number(duration))
+        (duration === "any" ||
+          departureStation.city !== "Berlin" ||
+          destination.durationMin <= Number(duration))
       );
-    });
-  }, [duration, query, tripType, vibe]);
+    }).sort(
+      (first, second) =>
+        destinationDistance(departureStation, first) -
+        destinationDistance(departureStation, second),
+    );
+  }, [departureStation, duration, query, tripType, vibe]);
 
   const selectedDestination =
     destinations.find((destination) => destination.slug === selectedSlug) ?? destinations[0];
@@ -250,6 +265,20 @@ export default function HomeClient() {
   const bookingUrl = buildBookingUrl(selectedDestination, stayCheckIn, stayCheckOut, stayGuests);
   const restaurantUrl = googleMapsSearchUrl(`top rated restaurants in ${selectedDestination.name}, Germany`);
   const activityUrl = googleMapsSearchUrl(`things to do in ${selectedDestination.name}, Germany`);
+  const selectedDistance = destinationDistance(departureStation, selectedDestination);
+  const berlinOrigin = departureStation.city === "Berlin";
+
+  useEffect(() => {
+    const storedLanguage = window.localStorage.getItem("deutschscanner-language");
+    if (storedLanguage === "de" || storedLanguage === "en") {
+      queueMicrotask(() => setLanguage(storedLanguage));
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    window.localStorage.setItem("deutschscanner-language", language);
+  }, [language]);
 
   useEffect(() => {
     if (!detailOpen && !accountOpen) return;
@@ -333,18 +362,22 @@ export default function HomeClient() {
             <Image src="/logo.png" alt="DeutschScanner" width={184} height={104} priority />
           </Link>
           <nav aria-label="Primary navigation" className="main-nav">
-            <Link href="#discover">Discover</Link>
-            <Link href="#journey">Route planner</Link>
-            <Link href="#about">How it works</Link>
+            <Link href="#discover">{t("discover")}</Link>
+            <Link href="#journey">{t("routePlanner")}</Link>
+            <Link href="#about">{t("howItWorks")}</Link>
           </nav>
           <div className="header-actions">
+            <div className="language-toggle" role="group" aria-label="Language / Sprache">
+              <button type="button" className={language === "en" ? "active" : ""} onClick={() => setLanguage("en")} aria-pressed={language === "en"}>EN</button>
+              <button type="button" className={language === "de" ? "active" : ""} onClick={() => setLanguage("de")} aria-pressed={language === "de"}>DE</button>
+            </div>
             <button
               className="saved-pill"
               type="button"
               aria-label={`${favorites.length} saved trips`}
               onClick={() => setAccountOpen(true)}
             >
-              <span aria-hidden="true">♥</span> {favorites.length} saved
+              <span aria-hidden="true">♥</span> {favorites.length} {t("saved")}
             </button>
             <button
               className={account.user ? "account-pill active" : "account-pill"}
@@ -352,7 +385,7 @@ export default function HomeClient() {
               onClick={() => setAccountOpen(true)}
             >
               <span aria-hidden="true">{account.user ? "✓" : "○"}</span>
-              {account.user ? account.displayName || "Passport" : "Account"}
+              {account.user ? account.displayName || t("passport") : t("account")}
             </button>
           </div>
         </div>
@@ -360,22 +393,21 @@ export default function HomeClient() {
 
       <section id="top" className="page-shell hero-section">
         <div className="hero-copy">
-          <p className="eyebrow"><span /> Berlin is only the beginning</p>
-          <h1>Your next escape is already on your ticket.</h1>
+          <p className="eyebrow"><span /> {t("heroEyebrow")}</p>
+          <h1>{t("heroTitle")}</h1>
           <p className="hero-lede">
-            Curated lakes, palaces, old towns and coastlines—all reachable with regional
-            transport and your Deutschlandticket.
+            {t("heroLede")}
           </p>
           <div className="hero-actions">
-            <Link className="primary-button" href="#discover">Explore {destinations.length} escapes <span>→</span></Link>
+            <Link className="primary-button" href="#discover">{t("explore")} {destinations.length} {t("escapes")} <span>→</span></Link>
             <button className="ghost-button" type="button" onClick={surpriseMe}>
-              <span aria-hidden="true">✦</span> Surprise me
+              <span aria-hidden="true">✦</span> {t("surpriseMe")}
             </button>
           </div>
           <div className="trust-row" aria-label="Service highlights">
-            <span><strong>{destinations.length}</strong> curated places</span>
-            <span><strong>Live</strong> DB connections</span>
-            <span><strong>€0</strong> extra train fare*</span>
+            <span><strong>{destinations.length}</strong> {t("curatedPlaces")}</span>
+            <span><strong>Live</strong> {t("dbConnections")}</span>
+            <span><strong>€0</strong> {t("extraFare")}</span>
           </div>
         </div>
 
@@ -389,11 +421,11 @@ export default function HomeClient() {
           />
           <div className="hero-gradient" />
           <div className="hero-caption">
-            <p>This weekend&apos;s easy win</p>
+            <p>{t("easyWin")}</p>
             <h2>Potsdam</h2>
             <div><span className="line-badge line-re">RE1</span><span>35 min</span><span>Direct</span></div>
           </div>
-          <div className="hero-note"><span>22°</span><small>Perfect for palace gardens</small></div>
+          <div className="hero-note"><span>22°</span><small>{t("perfectForGardens")}</small></div>
         </div>
       </section>
 
@@ -401,50 +433,56 @@ export default function HomeClient() {
         <div className="page-shell">
           <div className="section-heading">
             <div>
-              <p className="eyebrow"><span /> Find your kind of away</p>
-              <h2>What are you in the mood for?</h2>
+              <p className="eyebrow"><span /> {t("discoverEyebrow")}</p>
+              <h2>{t("discoverTitle")}</h2>
             </div>
-            <p>Choose a feeling, not a station. We&apos;ll handle the shortlist.</p>
+            <p>{t("discoverLede")}</p>
           </div>
 
-          <div className="vibe-row" role="group" aria-label="Filter by travel vibe">
+          <div className="vibe-row" role="group" aria-label={t("filterVibe")}>
             {vibes.map((item) => (
               <button
-                key={item}
+                key={item.value}
                 type="button"
-                onClick={() => setVibe(item)}
-                className={vibe === item ? "vibe-chip active" : "vibe-chip"}
-                aria-pressed={vibe === item}
+                onClick={() => setVibe(item.value)}
+                className={vibe === item.value ? "vibe-chip active" : "vibe-chip"}
+                aria-pressed={vibe === item.value}
               >
-                {item}
+                {t(item.label)}
               </button>
             ))}
           </div>
 
           <div className="filter-bar">
             <label>
-              <span>Search</span>
+              <span>{t("search")}</span>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Place, lake, coast…"
+                placeholder={t("searchPlaceholder")}
               />
             </label>
             <label>
-              <span>Trip style</span>
-              <select value={tripType} onChange={(event) => setTripType(event.target.value)}>
-                {tripTypes.map((item) => <option key={item}>{item}</option>)}
+              <span>{t("startStation")}</span>
+              <select value={departure} onChange={(event) => setDeparture(event.target.value)}>
+                {departureStations.map((station) => <option key={station.name}>{station.name}</option>)}
               </select>
             </label>
             <label>
-              <span>Travel time</span>
-              <select value={duration} onChange={(event) => setDuration(event.target.value)}>
+              <span>{t("tripStyle")}</span>
+              <select value={tripType} onChange={(event) => setTripType(event.target.value)}>
+                {tripTypes.map((item) => <option key={item.value} value={item.value}>{t(item.label)}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>{t("travelTime")}</span>
+              <select value={duration} onChange={(event) => setDuration(event.target.value)} disabled={!berlinOrigin}>
                 {durationOptions.map((item) => (
-                  <option key={item.value} value={item.value}>{item.label}</option>
+                  <option key={item.value} value={item.value}>{t(item.label)}</option>
                 ))}
               </select>
             </label>
-            <div className="result-count"><strong>{filteredDestinations.length}</strong><span>ideas found</span></div>
+            <div className="result-count"><strong>{filteredDestinations.length}</strong><span>{t("ideasFound")}</span></div>
           </div>
 
           {filteredDestinations.length > 0 ? (
@@ -461,7 +499,7 @@ export default function HomeClient() {
                       className="card-image"
                       type="button"
                       onClick={() => openDestination(destination)}
-                      aria-label={`View ${destination.name}`}
+                      aria-label={`${t("view")} ${destination.name}`}
                     >
                       <Image
                         src={destinationImage(destination)}
@@ -470,16 +508,16 @@ export default function HomeClient() {
                         sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 33vw"
                       />
                       <span className="card-number">{String(index + 1).padStart(2, "0")}</span>
-                      <span className="time-chip">{destination.time}</span>
+                      <span className="time-chip">{berlinOrigin ? destination.time : `${destinationDistance(departureStation, destination)} km`}</span>
                       {account.visitedSlugs.includes(destination.slug) && (
-                        <span className="visited-chip">✓ Visited</span>
+                        <span className="visited-chip">✓ {t("visited")}</span>
                       )}
                     </button>
                     <button
                       type="button"
                       className={isFavorite ? "favorite-button active" : "favorite-button"}
                       onClick={() => void toggleFavorite(destination.slug)}
-                      aria-label={isFavorite ? `Remove ${destination.name} from saved trips` : `Save ${destination.name}`}
+                      aria-label={isFavorite ? `${t("removeSaved")}: ${destination.name}` : `${t("save")}: ${destination.name}`}
                       aria-pressed={isFavorite}
                     >
                       {isFavorite ? "♥" : "♡"}
@@ -487,10 +525,10 @@ export default function HomeClient() {
                     <button className="card-copy" type="button" onClick={() => openDestination(destination)}>
                       <span>{destination.state}</span>
                       <h3>{destination.name}</h3>
-                      <p>{destination.summary}</p>
+                      <p>{destinationSummary(destination.slug, destination.summary, language)}</p>
                       <div>
-                        <span>{destination.routeOptions[0]?.line ?? "Regional"}</span>
-                        <span>{destination.transfers}</span>
+                        <span>{berlinOrigin ? destination.routeOptions[0]?.line ?? "Regional" : "DB live"}</span>
+                        <span>{destinationDistance(departureStation, destination)} km {t("away")}</span>
                         <span className="card-arrow">↗</span>
                       </div>
                     </button>
@@ -501,9 +539,9 @@ export default function HomeClient() {
           ) : (
             <div className="empty-state">
               <span aria-hidden="true">◎</span>
-              <h3>No escapes match that combination yet.</h3>
-              <p>Clear the filters and let the whole region back in.</p>
-              <button type="button" className="primary-button" onClick={resetFilters}>Reset filters</button>
+              <h3>{t("noMatches")}</h3>
+              <p>{t("clearFilters")}</p>
+              <button type="button" className="primary-button" onClick={resetFilters}>{t("resetFilters")}</button>
             </div>
           )}
         </div>
@@ -513,10 +551,10 @@ export default function HomeClient() {
         <div className="page-shell">
           <div className="section-heading light-heading">
             <div>
-              <p className="eyebrow"><span /> From idea to platform</p>
-              <h2>See the route before you commit.</h2>
+              <p className="eyebrow"><span /> {t("platformEyebrow")}</p>
+              <h2>{t("platformTitle")}</h2>
             </div>
-            <p>Curated route previews make the choice tangible. DB provides the live timetable.</p>
+            <p>{t("platformLede")}</p>
           </div>
 
           <div className="journey-grid">
@@ -531,7 +569,7 @@ export default function HomeClient() {
                   if (destination) openDestination(destination);
                 }}
               />
-              <div className="map-key"><span /> Curated route preview</div>
+              <div className="map-key"><span /> {t("routePreview")}</div>
             </div>
 
             <article className="route-panel">
@@ -540,7 +578,7 @@ export default function HomeClient() {
                   <p>{selectedDestination.state}</p>
                   <h3>{selectedDestination.name}</h3>
                 </div>
-                <span>{selectedDestination.time}</span>
+                <span>{berlinOrigin ? selectedDestination.time : `${selectedDistance} km`}</span>
               </div>
 
               <div className="route-options" role="group" aria-label="Choose a route">
@@ -570,22 +608,22 @@ export default function HomeClient() {
                     <span className={index === 0 || index === selectedRoute.stops.length - 1 ? "stop-dot endpoint" : "stop-dot"} />
                     <div>
                       <strong>{stop.name}</strong>
-                      <small>{index === 0 ? "Start" : index === selectedRoute.stops.length - 1 ? "Your escape" : `Stop ${index}`}</small>
+                      <small>{index === 0 ? t("start") : index === selectedRoute.stops.length - 1 ? t("yourEscape") : `${t("stop")} ${index}`}</small>
                     </div>
                   </li>
                 ))}
               </ol>
 
               <div className="departure-controls">
-                <label><span>From</span><select value={departure} onChange={(event) => setDeparture(event.target.value)}>{departureStations.map((station) => <option key={station.name}>{station.name}</option>)}</select></label>
-                <label><span>Date</span><input type="date" min={todayISO()} value={travelDate} onChange={(event) => updateTravelDate(event.target.value)} /></label>
-                <label><span>Time</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
+                <label><span>{t("from")}</span><select value={departure} onChange={(event) => setDeparture(event.target.value)}>{departureStations.map((station) => <option key={station.name}>{station.name}</option>)}</select></label>
+                <label><span>{t("date")}</span><input type="date" min={todayISO()} value={travelDate} onChange={(event) => updateTravelDate(event.target.value)} /></label>
+                <label><span>{t("time")}</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
               </div>
 
               <a className="db-button" href={dbUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open live Deutsche Bahn results from ${departure} to ${stationName(selectedDestination)}`}>
-                <span>DB</span> Live times: {departure} → {stationName(selectedDestination)} <b>↗</b>
+                <span>DB</span> {t("liveTimes")}: {departure} → {stationName(selectedDestination)} <b>↗</b>
               </a>
-              <p className="route-disclaimer">Route previews are curated for inspiration. Always confirm live services before travel.</p>
+              <p className="route-disclaimer">{t("routeDisclaimer")}</p>
             </article>
           </div>
         </div>
@@ -593,20 +631,26 @@ export default function HomeClient() {
 
       <section id="about" className="page-shell about-section">
         <div>
-          <p className="eyebrow"><span /> The simple promise</p>
-          <h2>Less planning.<br />More going.</h2>
+          <p className="eyebrow"><span /> {t("promiseEyebrow")}</p>
+          <h2>{t("promiseTitleA")}<br />{t("promiseTitleB")}</h2>
         </div>
         <div className="promise-grid">
-          <article><span>01</span><h3>Human-curated</h3><p>Every place earns its spot with a clear reason to go—not because an algorithm filled a list.</p></article>
-          <article><span>02</span><h3>Ticket-aware</h3><p>Regional-first journeys make the most of the Deutschlandticket you already carry.</p></article>
-          <article><span>03</span><h3>Live when it matters</h3><p>Dream here, then open the exact journey on DB to confirm current times and disruptions.</p></article>
+          <article><span>01</span><h3>{t("humanCurated")}</h3><p>{t("humanCuratedText")}</p></article>
+          <article><span>02</span><h3>{t("ticketAware")}</h3><p>{t("ticketAwareText")}</p></article>
+          <article><span>03</span><h3>{t("liveMatters")}</h3><p>{t("liveMattersText")}</p></article>
         </div>
       </section>
 
       <footer>
         <div className="page-shell footer-inner">
-          <div><Image src="/logo.png" alt="DeutschScanner" width={156} height={88} /><p>Go somewhere worth remembering.</p></div>
-          <p>*Regional transport eligibility varies. Check the current Deutschlandticket conditions and live journey details before departure.</p>
+          <div className="footer-brand"><Image src="/logo.png" alt="DeutschScanner" width={156} height={88} /><p>{t("footerTagline")}</p></div>
+          <nav className="footer-links" aria-label={t("followDb")}>
+            <a href="https://www.instagram.com/deutschebahn/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://www.tiktok.com/@deutschebahn" target="_blank" rel="noopener noreferrer">TikTok</a>
+            <a href="https://www.youtube.com/c/DeutscheBahnKonzern" target="_blank" rel="noopener noreferrer">YouTube</a>
+            <a className="download-app-button" href="https://www.bahn.de/service/mobile/db-navigator" target="_blank" rel="noopener noreferrer">{t("downloadApp")} ↗</a>
+          </nav>
+          <p className="footer-disclaimer">{t("footerDisclaimer")}</p>
         </div>
       </footer>
 
@@ -627,7 +671,7 @@ export default function HomeClient() {
               type="button"
               className="modal-close"
               onClick={() => setDetailOpen(false)}
-              aria-label="Close destination details"
+              aria-label={t("closeDetails")}
               autoFocus
             >
               ×
@@ -657,7 +701,7 @@ export default function HomeClient() {
                 onClick={() => void toggleFavorite(selectedDestination.slug)}
                 aria-pressed={favorites.includes(selectedDestination.slug)}
               >
-                {favorites.includes(selectedDestination.slug) ? "♥ Saved" : "♡ Save trip"}
+                {favorites.includes(selectedDestination.slug) ? `♥ ${t("savedTrip")}` : `♡ ${t("saveTrip")}`}
               </button>
               <button
                 type="button"
@@ -665,21 +709,21 @@ export default function HomeClient() {
                 onClick={() => void toggleVisited(selectedDestination.slug)}
                 aria-pressed={account.visitedSlugs.includes(selectedDestination.slug)}
               >
-                {account.visitedSlugs.includes(selectedDestination.slug) ? "✓ Visited" : "+ I’ve been here"}
+                {account.visitedSlugs.includes(selectedDestination.slug) ? `✓ ${t("visited")}` : `+ ${t("beenHere")}`}
               </button>
             </div>
 
             <div className="modal-body">
               <div className="modal-intro-grid">
                 <div>
-                  <p className="modal-kicker">Why it is worth the journey</p>
+                  <p className="modal-kicker">{t("whyWorthIt")}</p>
                   <p className="modal-intro">{placeGuide.intro}</p>
                 </div>
                 <div className="modal-facts">
-                  <article><span>Best for</span><strong>{placeGuide.bestFor}</strong></article>
-                  <article><span>Ideal stay</span><strong>{placeGuide.idealStay}</strong></article>
-                  <article><span>Best season</span><strong>{placeGuide.bestSeason}</strong></article>
-                  <article><span>From Berlin</span><strong>{selectedDestination.time}</strong></article>
+                  <article><span>{t("bestFor")}</span><strong>{placeGuide.bestFor}</strong></article>
+                  <article><span>{t("idealStay")}</span><strong>{placeGuide.idealStay}</strong></article>
+                  <article><span>{t("bestSeason")}</span><strong>{placeGuide.bestSeason}</strong></article>
+                  <article><span>{t("distanceFrom")} {departureStation.city}</span><strong>{selectedDistance} km</strong></article>
                 </div>
               </div>
 
@@ -692,15 +736,15 @@ export default function HomeClient() {
                     rel="noopener noreferrer"
                   >
                     <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div><strong>{highlight.name}</strong><p>{highlight.detail}</p><small>Open in Google Maps ↗</small></div>
+                    <div><strong>{highlight.name}</strong><p>{highlight.detail}</p><small>{t("openMaps")} ↗</small></div>
                   </a>
                 ))}
               </div>
 
               <div className="modal-route-heading">
                 <div>
-                  <p className="modal-kicker">Your route</p>
-                  <h3>From platform to place</h3>
+                  <p className="modal-kicker">{t("yourRoute")}</p>
+                  <h3>{t("platformToPlace")}</h3>
                 </div>
                 <p>{stopLabel(selectedRoute)} · {selectedDestination.transfers}</p>
               </div>
@@ -713,7 +757,7 @@ export default function HomeClient() {
                     selectedRoute={selectedRoute}
                     onSelect={() => undefined}
                   />
-                  <div className="map-key"><span /> Route preview</div>
+                  <div className="map-key"><span /> {t("routePreview")}</div>
                 </div>
 
                 <aside className="modal-route-card">
@@ -739,7 +783,7 @@ export default function HomeClient() {
                         <span className={index === 0 || index === selectedRoute.stops.length - 1 ? "stop-dot endpoint" : "stop-dot"} />
                         <div>
                           <strong>{stop.name}</strong>
-                          <small>{index === 0 ? "Start" : index === selectedRoute.stops.length - 1 ? "Your escape" : `Stop ${index}`}</small>
+                          <small>{index === 0 ? t("start") : index === selectedRoute.stops.length - 1 ? t("yourEscape") : `${t("stop")} ${index}`}</small>
                         </div>
                       </li>
                     ))}
@@ -750,27 +794,27 @@ export default function HomeClient() {
               <div className="modal-planner">
                 <div className="modal-tip">
                   <span aria-hidden="true">✦</span>
-                  <div><strong>A useful local note</strong><p>{placeGuide.localTip}</p></div>
+                  <div><strong>{t("usefulNote")}</strong><p>{placeGuide.localTip}</p></div>
                 </div>
                 <div className="departure-controls">
-                  <label><span>From</span><select value={departure} onChange={(event) => setDeparture(event.target.value)}>{departureStations.map((station) => <option key={station.name}>{station.name}</option>)}</select></label>
-                  <label><span>Date</span><input type="date" min={todayISO()} value={travelDate} onChange={(event) => updateTravelDate(event.target.value)} /></label>
-                  <label><span>Time</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
+                  <label><span>{t("from")}</span><select value={departure} onChange={(event) => setDeparture(event.target.value)}>{departureStations.map((station) => <option key={station.name}>{station.name}</option>)}</select></label>
+                  <label><span>{t("date")}</span><input type="date" min={todayISO()} value={travelDate} onChange={(event) => updateTravelDate(event.target.value)} /></label>
+                  <label><span>{t("time")}</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
                 </div>
                 <a className="db-button" href={dbUrl} target="_blank" rel="noopener noreferrer">
-                  <span>DB</span> Live times: {departure} → {stationName(selectedDestination)} <b>↗</b>
+                  <span>DB</span> {t("liveTimes")}: {departure} → {stationName(selectedDestination)} <b>↗</b>
                 </a>
-                <p className="route-disclaimer">This is a curated route preview. Confirm live services, platform changes, and ticket validity before travel.</p>
+                <p className="route-disclaimer">{t("routeDisclaimer")}</p>
               </div>
 
               <div className="modal-explore-heading">
-                <div><p className="modal-kicker">Turn the idea into a day</p><h3>A ready-made plan for {selectedDestination.name}</h3></div>
-                <a href={activityUrl} target="_blank" rel="noopener noreferrer">Explore everything nearby ↗</a>
+                <div><p className="modal-kicker">{t("dayIdea")}</p><h3>{t("readyPlan")} {selectedDestination.name}</h3></div>
+                <a href={activityUrl} target="_blank" rel="noopener noreferrer">{t("exploreNearby")} ↗</a>
               </div>
 
               <div className="modal-explore-grid">
                 <section className="itinerary-panel" aria-labelledby="itinerary-heading">
-                  <h4 id="itinerary-heading">A simple day plan</h4>
+                  <h4 id="itinerary-heading">{t("simplePlan")}</h4>
                   <ol>
                     {placeGuide.itinerary.map((stop) => (
                       <li key={`${stop.time}-${stop.title}`}>
@@ -782,11 +826,11 @@ export default function HomeClient() {
                 </section>
 
                 <section className="nearby-panel" aria-labelledby="nearby-heading">
-                  <h4 id="nearby-heading">Worth adding nearby</h4>
+                  <h4 id="nearby-heading">{t("worthNearby")}</h4>
                   <div>
                     {placeGuide.nearby.map((place) => (
                       <a key={place.name} href={googleMapsSearchUrl(place.mapsQuery)} target="_blank" rel="noopener noreferrer">
-                        <span>Nearby</span><strong>{place.name}</strong><p>{place.detail}</p><small>Find on Google Maps ↗</small>
+                        <span>{t("nearby")}</span><strong>{place.name}</strong><p>{place.detail}</p><small>{t("findMaps")} ↗</small>
                       </a>
                     ))}
                   </div>
@@ -795,28 +839,39 @@ export default function HomeClient() {
 
               <div className="food-stay-grid">
                 <section className="food-panel">
-                  <p className="modal-kicker">Eat well when you arrive</p>
-                  <h3>Let the latest local ratings guide lunch.</h3>
-                  <p>Open a live Google Maps search centered on {selectedDestination.name}, then compare ratings, opening hours, and walking distance.</p>
-                  <a href={restaurantUrl} target="_blank" rel="noopener noreferrer">Find top-rated restaurants <span>↗</span></a>
+                  <p className="modal-kicker">{t("eatWell")}</p>
+                  <h3>{t("ratingsLunch")}</h3>
+                  <p>{t("restaurantText")}</p>
+                  <a href={restaurantUrl} target="_blank" rel="noopener noreferrer">{t("restaurants")} <span>↗</span></a>
                 </section>
 
                 <section className="stay-panel">
-                  <p className="modal-kicker">Stay the night</p>
-                  <h3>Turn the escape into a getaway.</h3>
+                  <p className="modal-kicker">{t("stayNight")}</p>
+                  <h3>{t("getaway")}</h3>
                   <div className="stay-controls">
-                    <label><span>Check in</span><input type="date" min={todayISO()} value={stayCheckIn} onChange={(event) => { setStayCheckIn(event.target.value); if (event.target.value >= stayCheckOut) setStayCheckOut(addDaysISO(event.target.value, 1)); }} /></label>
-                    <label><span>Check out</span><input type="date" min={addDaysISO(stayCheckIn, 1)} value={stayCheckOut} onChange={(event) => setStayCheckOut(event.target.value)} /></label>
-                    <label><span>Guests</span><select value={stayGuests} onChange={(event) => setStayGuests(event.target.value)}><option value="1">1 guest</option><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4 guests</option></select></label>
+                    <label><span>{t("checkIn")}</span><input type="date" min={todayISO()} value={stayCheckIn} onChange={(event) => { setStayCheckIn(event.target.value); if (event.target.value >= stayCheckOut) setStayCheckOut(addDaysISO(event.target.value, 1)); }} /></label>
+                    <label><span>{t("checkOut")}</span><input type="date" min={addDaysISO(stayCheckIn, 1)} value={stayCheckOut} onChange={(event) => setStayCheckOut(event.target.value)} /></label>
+                    <label><span>{t("guests")}</span><select value={stayGuests} onChange={(event) => setStayGuests(event.target.value)}><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
                   </div>
-                  <a className="stay-button" href={bookingUrl} target="_blank" rel="noopener noreferrer">See available hotels & hostels <span>↗</span></a>
-                  <small>Availability, pricing, and booking are completed securely on Booking.com.</small>
+                  <a className="stay-button" href={bookingUrl} target="_blank" rel="noopener noreferrer">{t("hotels")} <span>↗</span></a>
+                  <small>{t("bookingNote")}</small>
                 </section>
               </div>
 
+              <CommunitySection
+                destinationSlug={selectedDestination.slug}
+                destinationName={selectedDestination.name}
+                account={account}
+                language={language}
+                onRequireAccount={() => {
+                  setDetailOpen(false);
+                  setAccountOpen(true);
+                }}
+              />
+
               <div className="practical-strip">
-                <article><span aria-hidden="true">◎</span><div><strong>Arriving and getting around</strong><p>{placeGuide.arrivalTip}</p></div></article>
-                <article><span aria-hidden="true">✦</span><div><strong>Local planning note</strong><p>{placeGuide.localTip}</p></div></article>
+                <article><span aria-hidden="true">◎</span><div><strong>{t("arrival")}</strong><p>{placeGuide.arrivalTip}</p></div></article>
+                <article><span aria-hidden="true">✦</span><div><strong>{t("planningNote")}</strong><p>{placeGuide.localTip}</p></div></article>
               </div>
             </div>
           </section>
@@ -826,6 +881,7 @@ export default function HomeClient() {
       {accountOpen && (
         <AccountPanel
           account={account}
+          language={language}
           onClose={() => setAccountOpen(false)}
           onOpenDestination={openDestinationFromAccount}
         />
