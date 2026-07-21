@@ -7,6 +7,7 @@ type MapWrapperProps = {
   points: Destination[];
   selectedSlug?: string;
   selectedRoute?: RouteOption;
+  visitedSlugs?: string[];
   onSelect?: (slug: string) => void;
 };
 
@@ -18,6 +19,7 @@ export default function MapWrapper({
   points,
   selectedSlug,
   selectedRoute,
+  visitedSlugs,
   onSelect,
 }: MapWrapperProps) {
   return (
@@ -25,6 +27,7 @@ export default function MapWrapper({
       points={points}
       selectedSlug={selectedSlug}
       selectedRoute={selectedRoute}
+      visitedSlugs={visitedSlugs}
       onSelect={onSelect}
     />
   );

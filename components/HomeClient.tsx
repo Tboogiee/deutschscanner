@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import AccountPanel from "@/components/AccountPanel";
 import MapWrapper from "@/components/MapWrapper";
 import {
   destinations,
@@ -11,6 +12,7 @@ import {
   type TransitType,
 } from "@/data/destinations";
 import { getDestinationGuide } from "@/data/destinationGuides";
+import { useTravelAccount } from "@/hooks/useTravelAccount";
 
 const vibes = ["All", "Lakes", "Nature", "City", "History", "Coast", "Wellness"];
 
@@ -169,6 +171,7 @@ function stopLabel(route: RouteOption) {
 }
 
 export default function HomeClient() {
+  const account = useTravelAccount();
   const [query, setQuery] = useState("");
   const [vibe, setVibe] = useState("All");
   const [tripType, setTripType] = useState("All trips");
@@ -178,11 +181,12 @@ export default function HomeClient() {
   const [travelTime, setTravelTime] = useState("09:30");
   const [selectedSlug, setSelectedSlug] = useState("potsdam");
   const [selectedRouteId, setSelectedRouteId] = useState("potsdam-re1");
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [stayCheckIn, setStayCheckIn] = useState(todayISO());
   const [stayCheckOut, setStayCheckOut] = useState(addDaysISO(todayISO(), 1));
   const [stayGuests, setStayGuests] = useState("2");
+  const favorites = account.favorites;
 
   const filteredDestinations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -220,11 +224,13 @@ export default function HomeClient() {
   const activityUrl = googleMapsSearchUrl(`things to do in ${selectedDestination.name}, Germany`);
 
   useEffect(() => {
-    if (!detailOpen) return;
+    if (!detailOpen && !accountOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setDetailOpen(false);
+      if (event.key !== "Escape") return;
+      if (accountOpen) setAccountOpen(false);
+      else setDetailOpen(false);
     };
 
     document.body.style.overflow = "hidden";
@@ -234,7 +240,7 @@ export default function HomeClient() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [detailOpen]);
+  }, [accountOpen, detailOpen]);
 
   function selectDestination(destination: Destination) {
     setSelectedSlug(destination.slug);
@@ -246,12 +252,29 @@ export default function HomeClient() {
     setDetailOpen(true);
   }
 
-  function toggleFavorite(slug: string) {
-    setFavorites((current) =>
-      current.includes(slug)
-        ? current.filter((favorite) => favorite !== slug)
-        : [...current, slug],
-    );
+  async function toggleFavorite(slug: string) {
+    await account.toggleFavorite(slug);
+  }
+
+  async function toggleVisited(slug: string) {
+    if (!account.user) {
+      setDetailOpen(false);
+      setAccountOpen(true);
+      return;
+    }
+
+    if (account.visitedSlugs.includes(slug)) {
+      await account.removeVisit(slug);
+    } else {
+      await account.saveVisit(slug, todayISO());
+    }
+  }
+
+  function openDestinationFromAccount(slug: string) {
+    const destination = destinations.find((item) => item.slug === slug);
+    if (!destination) return;
+    setAccountOpen(false);
+    openDestination(destination);
   }
 
   function surpriseMe() {
@@ -286,9 +309,24 @@ export default function HomeClient() {
             <Link href="#journey">Route planner</Link>
             <Link href="#about">How it works</Link>
           </nav>
-          <button className="saved-pill" type="button" aria-label={`${favorites.length} saved trips`}>
-            <span aria-hidden="true">♥</span> {favorites.length} saved
-          </button>
+          <div className="header-actions">
+            <button
+              className="saved-pill"
+              type="button"
+              aria-label={`${favorites.length} saved trips`}
+              onClick={() => setAccountOpen(true)}
+            >
+              <span aria-hidden="true">♥</span> {favorites.length} saved
+            </button>
+            <button
+              className={account.user ? "account-pill active" : "account-pill"}
+              type="button"
+              onClick={() => setAccountOpen(true)}
+            >
+              <span aria-hidden="true">{account.user ? "✓" : "○"}</span>
+              {account.user ? account.displayName || "Passport" : "Account"}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -405,11 +443,14 @@ export default function HomeClient() {
                       />
                       <span className="card-number">{String(index + 1).padStart(2, "0")}</span>
                       <span className="time-chip">{destination.time}</span>
+                      {account.visitedSlugs.includes(destination.slug) && (
+                        <span className="visited-chip">✓ Visited</span>
+                      )}
                     </button>
                     <button
                       type="button"
                       className={isFavorite ? "favorite-button active" : "favorite-button"}
-                      onClick={() => toggleFavorite(destination.slug)}
+                      onClick={() => void toggleFavorite(destination.slug)}
                       aria-label={isFavorite ? `Remove ${destination.name} from saved trips` : `Save ${destination.name}`}
                       aria-pressed={isFavorite}
                     >
@@ -456,6 +497,7 @@ export default function HomeClient() {
                 points={filteredDestinations.length ? filteredDestinations : destinations}
                 selectedSlug={selectedDestination.slug}
                 selectedRoute={selectedRoute}
+                visitedSlugs={account.visitedSlugs}
                 onSelect={(slug) => {
                   const destination = destinations.find((item) => item.slug === slug);
                   if (destination) openDestination(destination);
@@ -584,10 +626,18 @@ export default function HomeClient() {
               <button
                 type="button"
                 className={favorites.includes(selectedDestination.slug) ? "modal-save active" : "modal-save"}
-                onClick={() => toggleFavorite(selectedDestination.slug)}
+                onClick={() => void toggleFavorite(selectedDestination.slug)}
                 aria-pressed={favorites.includes(selectedDestination.slug)}
               >
                 {favorites.includes(selectedDestination.slug) ? "♥ Saved" : "♡ Save trip"}
+              </button>
+              <button
+                type="button"
+                className={account.visitedSlugs.includes(selectedDestination.slug) ? "modal-visit active" : "modal-visit"}
+                onClick={() => void toggleVisited(selectedDestination.slug)}
+                aria-pressed={account.visitedSlugs.includes(selectedDestination.slug)}
+              >
+                {account.visitedSlugs.includes(selectedDestination.slug) ? "✓ Visited" : "+ I’ve been here"}
               </button>
             </div>
 
@@ -743,6 +793,14 @@ export default function HomeClient() {
             </div>
           </section>
         </div>
+      )}
+
+      {accountOpen && (
+        <AccountPanel
+          account={account}
+          onClose={() => setAccountOpen(false)}
+          onOpenDestination={openDestinationFromAccount}
+        />
       )}
     </main>
   );

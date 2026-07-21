@@ -17,6 +17,7 @@ type MockupMapProps = {
   points: Destination[];
   selectedSlug?: string;
   selectedRoute?: RouteOption;
+  visitedSlugs?: string[];
   onSelect?: (slug: string) => void;
 };
 
@@ -37,6 +38,7 @@ export default function MockupMap({
   points,
   selectedSlug,
   selectedRoute,
+  visitedSlugs = [],
   onSelect,
 }: MockupMapProps) {
   return (
@@ -62,28 +64,33 @@ export default function MockupMap({
           <Popup>Berlin Hbf</Popup>
         </CircleMarker>
 
-        {points.map((point) => (
-          <CircleMarker
-            key={point.slug}
-            center={[point.lat, point.lng]}
-            radius={point.slug === selectedSlug ? 9 : 6}
-            pathOptions={{
-              color: point.slug === selectedSlug ? "#ffffff" : "#082f49",
-              fillColor: point.slug === selectedSlug ? "#f26a2e" : "#ffffff",
-              fillOpacity: 1,
-              weight: point.slug === selectedSlug ? 4 : 2,
-            }}
-            eventHandlers={{
-              click: () => onSelect?.(point.slug),
-            }}
-          >
-            <Popup>
-              <strong>{point.name}</strong>
-              <br />
-              {point.time} from Berlin
-            </Popup>
-          </CircleMarker>
-        ))}
+        {points.map((point) => {
+          const isSelected = point.slug === selectedSlug;
+          const isVisited = visitedSlugs.includes(point.slug);
+          return (
+            <CircleMarker
+              key={point.slug}
+              center={[point.lat, point.lng]}
+              radius={isSelected ? 9 : isVisited ? 7 : 6}
+              pathOptions={{
+                color: isSelected || isVisited ? "#ffffff" : "#082f49",
+                fillColor: isSelected ? "#f26a2e" : isVisited ? "#168447" : "#ffffff",
+                fillOpacity: 1,
+                weight: isSelected ? 4 : isVisited ? 3 : 2,
+              }}
+              eventHandlers={{
+                click: () => onSelect?.(point.slug),
+              }}
+            >
+              <Popup>
+                <strong>{point.name}</strong>
+                <br />
+                {point.time} from Berlin
+                {isVisited && <><br />✓ Visited</>}
+              </Popup>
+            </CircleMarker>
+          );
+        })}
 
         {selectedRoute && (
           <>
