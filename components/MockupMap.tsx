@@ -2,14 +2,14 @@
 
 import "leaflet/dist/leaflet.css";
 
-import L from "leaflet";
+import { useEffect } from "react";
 import {
   CircleMarker,
   MapContainer,
-  Marker,
   Popup,
   Polyline,
   TileLayer,
+  useMap,
 } from "react-leaflet";
 import type { Destination, RouteOption } from "@/data/destinations";
 
@@ -22,27 +22,16 @@ type MockupMapProps = {
 
 const berlin: [number, number] = [52.5251, 13.3694];
 
-const markerIcon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+function MapFocus({ selectedRoute }: { selectedRoute?: RouteOption }) {
+  const map = useMap();
 
-const selectedMarkerIcon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [32, 52],
-  iconAnchor: [16, 52],
-  popupAnchor: [1, -42],
-  shadowSize: [52, 52],
-});
+  useEffect(() => {
+    if (!selectedRoute || selectedRoute.geometry.length < 2) return;
+    map.fitBounds(selectedRoute.geometry, { padding: [48, 48], maxZoom: 9 });
+  }, [map, selectedRoute]);
+
+  return null;
+}
 
 export default function MockupMap({
   points,
@@ -51,7 +40,7 @@ export default function MockupMap({
   onSelect,
 }: MockupMapProps) {
   return (
-    <div className="h-[640px] w-full">
+    <div className="h-[720px] w-full">
       <MapContainer
         center={[52.5, 13.2]}
         zoom={7}
@@ -63,15 +52,27 @@ export default function MockupMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <Marker position={berlin} icon={markerIcon}>
+        <MapFocus selectedRoute={selectedRoute} />
+
+        <CircleMarker
+          center={berlin}
+          radius={9}
+          pathOptions={{ color: "#ffffff", fillColor: "#082f49", fillOpacity: 1, weight: 3 }}
+        >
           <Popup>Berlin Hbf</Popup>
-        </Marker>
+        </CircleMarker>
 
         {points.map((point) => (
-          <Marker
+          <CircleMarker
             key={point.slug}
-            position={[point.lat, point.lng]}
-            icon={point.slug === selectedSlug ? selectedMarkerIcon : markerIcon}
+            center={[point.lat, point.lng]}
+            radius={point.slug === selectedSlug ? 9 : 6}
+            pathOptions={{
+              color: point.slug === selectedSlug ? "#ffffff" : "#082f49",
+              fillColor: point.slug === selectedSlug ? "#f26a2e" : "#ffffff",
+              fillOpacity: 1,
+              weight: point.slug === selectedSlug ? 4 : 2,
+            }}
             eventHandlers={{
               click: () => onSelect?.(point.slug),
             }}
@@ -81,7 +82,7 @@ export default function MockupMap({
               <br />
               {point.time} from Berlin
             </Popup>
-          </Marker>
+          </CircleMarker>
         ))}
 
         {selectedRoute && (

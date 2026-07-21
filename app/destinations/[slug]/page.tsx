@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   destinations,
@@ -9,6 +10,22 @@ type DestinationPageProps = {
   params: Promise<{
     slug: string;
   }>;
+};
+
+const destinationImages: Record<string, string> = {
+  potsdam: "/destinations/potsdam.jpg",
+  oranienburg: "/destinations/oranienburg.jpg",
+  "werder-havel": "/destinations/werder.jpg",
+  "bad-saarow": "/destinations/bad-saarow.jpg",
+  angermuende: "/destinations/angermuende.jpg",
+  templin: "/destinations/templin.jpg",
+  neustrelitz: "/destinations/neustrelitz.jpg",
+  "waren-mueritz": "/destinations/waren.jpg",
+  luebbenau: "/destinations/luebbenau.jpg",
+  dresden: "/destinations/dresden.jpg",
+  rostock: "/destinations/rostock.jpg",
+  warnemuende: "/destinations/rostock.jpg",
+  schwerin: "/destinations/schwerin.jpg",
 };
 
 function lineBadgeClass(type: TransitType) {
@@ -104,13 +121,15 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
 
         <p className="mt-4 text-lg text-[#5f6b85]">{destination.summary}</p>
 
-        {destination.image && (
-          <img
-            src={destination.image}
+        <div className="relative mt-6 h-72 overflow-hidden rounded-3xl">
+          <Image
+            src={destinationImages[destination.slug] ?? "/destinations/potsdam.jpg"}
             alt={destination.name}
-            className="mt-6 h-72 w-full rounded-3xl object-cover"
+            fill
+            sizes="(max-width: 900px) 100vw, 900px"
+            className="object-cover"
           />
-        )}
+        </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl bg-[#F7FAFD] p-5">

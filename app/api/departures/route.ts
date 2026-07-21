@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 
-const mockDepartures: Record<string, any[]> = {
+type Departure = {
+  from: string;
+  line: string;
+  departure: string;
+  platform: string;
+  direction: string;
+};
+
+const mockDepartures: Record<string, Departure[]> = {
   potsdam: [
     { from: "Berlin Hbf", line: "RE1", departure: "14:42", platform: "7", direction: "Brandenburg Hbf" },
     { from: "Berlin Hbf", line: "S7", departure: "15:01", platform: "3", direction: "Potsdam Hbf" },
