@@ -25,6 +25,30 @@ export type AccountVisit = {
   notes: string;
 };
 
+export type CommunityReview = {
+  id: string;
+  destinationSlug: string;
+  rating: number;
+  body: string;
+  authorName: string;
+  createdAt: string;
+};
+
+export type SharedItinerary = {
+  id: string;
+  destinationSlug: string;
+  title: string;
+  summary: string;
+  stops: string[];
+  authorName: string;
+  createdAt: string;
+};
+
+export type DestinationCommunity = {
+  reviews: CommunityReview[];
+  itineraries: SharedItinerary[];
+};
+
 type AuthPayload = Partial<SupabaseSession> & {
   user?: SupabaseUser;
   id?: string;
@@ -38,6 +62,23 @@ type VisitRow = {
   destination_slug: string;
   visited_at: string;
   notes: string;
+};
+type ReviewRow = {
+  id: string;
+  destination_slug: string;
+  rating: number;
+  body: string;
+  author_name: string;
+  created_at: string;
+};
+type ItineraryRow = {
+  id: string;
+  destination_slug: string;
+  title: string;
+  summary: string;
+  stops: unknown;
+  author_name: string;
+  created_at: string;
 };
 
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
@@ -363,6 +404,104 @@ export async function setVisit(
   await supabaseRequest<null>(
     `/rest/v1/visits?user_id=eq.${encodeURIComponent(session.user.id)}&destination_slug=eq.${encodeURIComponent(destinationSlug)}`,
     { method: "DELETE", headers: { Prefer: "return=minimal" } },
+    session.access_token,
+  );
+}
+
+export async function loadDestinationCommunity(
+  destinationSlug: string,
+  session?: SupabaseSession | null,
+): Promise<DestinationCommunity> {
+  if (!isSupabaseConfigured) return { reviews: [], itineraries: [] };
+  const slug = encodeURIComponent(destinationSlug);
+  const accessToken = session?.access_token;
+  const [reviewRows, itineraryRows] = await Promise.all([
+    supabaseRequest<ReviewRow[]>(
+      `/rest/v1/reviews?destination_slug=eq.${slug}&select=id,destination_slug,rating,body,author_name,created_at&order=created_at.desc&limit=40`,
+      { method: "GET" },
+      accessToken,
+    ),
+    supabaseRequest<ItineraryRow[]>(
+      `/rest/v1/shared_itineraries?destination_slug=eq.${slug}&select=id,destination_slug,title,summary,stops,author_name,created_at&order=created_at.desc&limit=30`,
+      { method: "GET" },
+      accessToken,
+    ),
+  ]);
+
+  return {
+    reviews: reviewRows.map((row) => ({
+      id: row.id,
+      destinationSlug: row.destination_slug,
+      rating: row.rating,
+      body: row.body,
+      authorName: row.author_name,
+      createdAt: row.created_at,
+    })),
+    itineraries: itineraryRows.map((row) => ({
+      id: row.id,
+      destinationSlug: row.destination_slug,
+      title: row.title,
+      summary: row.summary,
+      stops: Array.isArray(row.stops)
+        ? row.stops.filter((stop): stop is string => typeof stop === "string")
+        : [],
+      authorName: row.author_name,
+      createdAt: row.created_at,
+    })),
+  };
+}
+
+export async function saveReview(
+  session: SupabaseSession,
+  review: {
+    destinationSlug: string;
+    rating: number;
+    body: string;
+    authorName: string;
+  },
+) {
+  await supabaseRequest<null>(
+    "/rest/v1/reviews?on_conflict=user_id,destination_slug",
+    {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({
+        user_id: session.user.id,
+        destination_slug: review.destinationSlug,
+        rating: review.rating,
+        body: review.body,
+        author_name: review.authorName,
+        updated_at: new Date().toISOString(),
+      }),
+    },
+    session.access_token,
+  );
+}
+
+export async function saveSharedItinerary(
+  session: SupabaseSession,
+  itinerary: {
+    destinationSlug: string;
+    title: string;
+    summary: string;
+    stops: string[];
+    authorName: string;
+  },
+) {
+  await supabaseRequest<null>(
+    "/rest/v1/shared_itineraries",
+    {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        user_id: session.user.id,
+        destination_slug: itinerary.destinationSlug,
+        title: itinerary.title,
+        summary: itinerary.summary,
+        stops: itinerary.stops,
+        author_name: itinerary.authorName,
+      }),
+    },
     session.access_token,
   );
 }
