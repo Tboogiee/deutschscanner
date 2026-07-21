@@ -10,6 +10,7 @@ import {
   type RouteOption,
   type TransitType,
 } from "@/data/destinations";
+import { getDestinationGuide } from "@/data/destinationGuides";
 
 const vibes = ["All", "Lakes", "Nature", "City", "History", "Coast", "Wellness"];
 
@@ -27,6 +28,16 @@ const durationOptions = [
   { label: "Under 2 hours", value: "120" },
   { label: "Under 3 hours", value: "180" },
   { label: "Under 4 hours", value: "240" },
+];
+
+const departureStations = [
+  { name: "Berlin Hbf", coordinates: [52.525589, 13.369549] as const },
+  { name: "Berlin Ostkreuz", coordinates: [52.503, 13.4694] as const },
+  { name: "Berlin Alexanderplatz", coordinates: [52.5219, 13.4132] as const },
+  { name: "Berlin Südkreuz", coordinates: [52.475, 13.3653] as const },
+  { name: "Berlin Gesundbrunnen", coordinates: [52.5486, 13.3889] as const },
+  { name: "Berlin Zoologischer Garten", coordinates: [52.5072, 13.3323] as const },
+  { name: "Berlin-Spandau", coordinates: [52.5347, 13.1973] as const },
 ];
 
 const localImages: Record<string, string> = {
@@ -65,7 +76,16 @@ function destinationImage(destination: Destination) {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+  return localNow.toISOString().slice(0, 10);
+}
+
+function addDaysISO(date: string, days: number) {
+  const value = new Date(`${date}T12:00:00`);
+  value.setDate(value.getDate() + days);
+  const localValue = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
+  return localValue.toISOString().slice(0, 10);
 }
 
 function lineClass(type: TransitType) {
@@ -85,16 +105,27 @@ function stationName(destination: Destination) {
   return finalStop ?? destination.name;
 }
 
+function dbStationIdentity(name: string, coordinates: readonly [number, number]) {
+  const [latitude, longitude] = coordinates;
+  return `A=1@O=${name}@X=${Math.round(longitude * 1_000_000)}@Y=${Math.round(latitude * 1_000_000)}@U=80@`;
+}
+
 function buildDbUrl(
   departure: string,
   destination: Destination,
   date: string,
   time: string,
 ) {
+  const departureStation = departureStations.find((station) => station.name === departure) ?? departureStations[0];
+  const destinationStop = destination.routeOptions[0]?.stops.at(-1);
+  const destinationStationName = destinationStop?.name ?? destination.name;
+  const destinationCoordinates = destinationStop?.coordinates ?? [destination.lat, destination.lng];
   const params = new URLSearchParams({
     sts: "true",
-    so: departure,
-    zo: stationName(destination),
+    so: departureStation.name,
+    zo: destinationStationName,
+    soid: dbStationIdentity(departureStation.name, departureStation.coordinates),
+    zoid: dbStationIdentity(destinationStationName, destinationCoordinates),
     sot: "ST",
     zot: "ST",
     hd: `${date}T${time}:00`,
@@ -105,86 +136,36 @@ function buildDbUrl(
     kl: "2",
   });
 
-  return `https://www.bahn.de/buchung/fahrplan/suche#${params.toString()}`;
+  const encodedParams = params.toString().replace(/\+/g, "%20");
+  return `https://www.bahn.de/buchung/fahrplan/suche#${encodedParams}`;
+}
+
+function googleMapsSearchUrl(query: string) {
+  const params = new URLSearchParams({ api: "1", query });
+  return `https://www.google.com/maps/search/?${params.toString()}`;
+}
+
+function buildBookingUrl(
+  destination: Destination,
+  checkIn: string,
+  checkOut: string,
+  guests: string,
+) {
+  const params = new URLSearchParams({
+    ss: `${destination.name}, ${destination.state}, Germany`,
+    checkin: checkIn,
+    checkout: checkOut,
+    group_adults: guests,
+    no_rooms: "1",
+    group_children: "0",
+  });
+
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
 function stopLabel(route: RouteOption) {
   const intermediateStops = Math.max(route.stops.length - 2, 0);
   return intermediateStops === 1 ? "1 stop on the way" : `${intermediateStops} stops on the way`;
-}
-
-type PlaceGuide = {
-  intro: string;
-  highlights: string[];
-  bestFor: string;
-  idealStay: string;
-  localTip: string;
-};
-
-const placeGuides: Record<string, PlaceGuide> = {
-  potsdam: {
-    intro: "A graceful escape where royal gardens, lakeside paths, and handsome old streets fit naturally into one unhurried day.",
-    highlights: ["Walk the gardens around Sanssouci", "Pause for coffee in the Dutch Quarter", "Finish beside the Havel before the train home"],
-    bestFor: "Palaces & slow afternoons",
-    idealStay: "Full day",
-    localTip: "Start with the palace grounds while they are quiet, then work back toward the old town.",
-  },
-  luebbenau: {
-    intro: "The gateway to the Spreewald pairs storybook lanes with waterways, forest shade, and a pace that feels far from the city.",
-    highlights: ["Join a traditional punt or rent a kayak", "Follow waterside trails through the biosphere", "Try local Spreewald pickles at the harbor"],
-    bestFor: "Waterways & nature",
-    idealStay: "Full day",
-    localTip: "Reserve a boat trip on warm weekends and leave a little time to explore beyond the harbor.",
-  },
-  rostock: {
-    intro: "A Hanseatic city break with brick-gothic streets, a lively harbor, and the Baltic coast close enough to add sea air to the day.",
-    highlights: ["Explore the old town and Neuer Markt", "Walk Rostock's city harbor", "Continue to Warnemünde if time allows"],
-    bestFor: "City & seaside",
-    idealStay: "Long day or weekend",
-    localTip: "For a beach extension, keep enough time for the local connection between Rostock and Warnemünde.",
-  },
-  schwerin: {
-    intro: "A compact lakeside capital centered on one of Germany's most theatrical castles, with gardens and old-town streets made for wandering.",
-    highlights: ["Circle Schwerin Castle and its gardens", "Stroll through the old town", "Take a quiet lakeside break before returning"],
-    bestFor: "Architecture & lakes",
-    idealStay: "Full day",
-    localTip: "The castle looks especially striking from the paths across the water—save time for the longer loop.",
-  },
-  dresden: {
-    intro: "Grand riverside architecture, world-class collections, and characterful neighborhoods make Dresden rewarding from morning until evening.",
-    highlights: ["Walk the historic center and Brühl's Terrace", "Choose one major museum rather than rushing several", "Cross the Elbe for cafés in Neustadt"],
-    bestFor: "Art & architecture",
-    idealStay: "Long day or weekend",
-    localTip: "Book timed museum entry in advance and build the rest of your route around it.",
-  },
-  "waren-mueritz": {
-    intro: "A relaxed base on Germany's largest inland lake, ideal for open-water views, cycling, and an easy dose of national-park nature.",
-    highlights: ["Walk Waren's harbor and old town", "Follow a lakeside cycling or walking route", "Add a Müritz National Park excursion"],
-    bestFor: "Lakes & outdoor time",
-    idealStay: "Full day or weekend",
-    localTip: "Check seasonal boat and bus timetables before choosing the farthest point on your route.",
-  },
-  "bad-saarow": {
-    intro: "A low-effort lake escape where wooded shoreline, spa time, and quiet cafés create an easy reset from Berlin.",
-    highlights: ["Walk the Scharmützelsee promenade", "Book a thermal spa session", "Take a gentle forest or lakeside loop"],
-    bestFor: "Wellness & water",
-    idealStay: "Half or full day",
-    localTip: "Reserve spa entry before departure, especially on colder weekends.",
-  },
-};
-
-function getPlaceGuide(destination: Destination): PlaceGuide {
-  return placeGuides[destination.slug] ?? {
-    intro: destination.summary,
-    highlights: [
-      `Explore ${destination.name}'s center and independent cafés.`,
-      `Shape the day around ${destination.categories.slice(0, 2).join(" and ").toLowerCase()}.`,
-      "Leave room for one unplanned walk before the return train.",
-    ],
-    bestFor: destination.categories.slice(0, 2).join(" & "),
-    idealStay: destination.tripTypes[0] ?? "Day trip",
-    localTip: "Check the final regional connection before setting out so the return stays relaxed.",
-  };
 }
 
 export default function HomeClient() {
@@ -199,6 +180,9 @@ export default function HomeClient() {
   const [selectedRouteId, setSelectedRouteId] = useState("potsdam-re1");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [stayCheckIn, setStayCheckIn] = useState(todayISO());
+  const [stayCheckOut, setStayCheckOut] = useState(addDaysISO(todayISO(), 1));
+  const [stayGuests, setStayGuests] = useState("2");
 
   const filteredDestinations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -230,7 +214,10 @@ export default function HomeClient() {
     selectedDestination.routeOptions[0];
 
   const dbUrl = buildDbUrl(departure, selectedDestination, travelDate, travelTime);
-  const placeGuide = getPlaceGuide(selectedDestination);
+  const placeGuide = getDestinationGuide(selectedDestination.slug);
+  const bookingUrl = buildBookingUrl(selectedDestination, stayCheckIn, stayCheckOut, stayGuests);
+  const restaurantUrl = googleMapsSearchUrl(`top rated restaurants in ${selectedDestination.name}, Germany`);
+  const activityUrl = googleMapsSearchUrl(`things to do in ${selectedDestination.name}, Germany`);
 
   useEffect(() => {
     if (!detailOpen) return;
@@ -279,6 +266,12 @@ export default function HomeClient() {
     setVibe("All");
     setTripType("All trips");
     setDuration("any");
+  }
+
+  function updateTravelDate(value: string) {
+    setTravelDate(value);
+    setStayCheckIn(value);
+    setStayCheckOut(addDaysISO(value, 1));
   }
 
   return (
@@ -514,13 +507,13 @@ export default function HomeClient() {
               </ol>
 
               <div className="departure-controls">
-                <label><span>From</span><input value={departure} onChange={(event) => setDeparture(event.target.value)} /></label>
-                <label><span>Date</span><input type="date" value={travelDate} onChange={(event) => setTravelDate(event.target.value)} /></label>
+                <label><span>From</span><select value={departure} onChange={(event) => setDeparture(event.target.value)}>{departureStations.map((station) => <option key={station.name}>{station.name}</option>)}</select></label>
+                <label><span>Date</span><input type="date" min={todayISO()} value={travelDate} onChange={(event) => updateTravelDate(event.target.value)} /></label>
                 <label><span>Time</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
               </div>
 
-              <a className="db-button" href={dbUrl} target="_blank" rel="noreferrer">
-                <span>DB</span> Check live journey on bahn.de <b>↗</b>
+              <a className="db-button" href={dbUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open live Deutsche Bahn results from ${departure} to ${stationName(selectedDestination)}`}>
+                <span>DB</span> Live times: {departure} → {stationName(selectedDestination)} <b>↗</b>
               </a>
               <p className="route-disclaimer">Route previews are curated for inspiration. Always confirm live services before travel.</p>
             </article>
@@ -607,16 +600,22 @@ export default function HomeClient() {
                 <div className="modal-facts">
                   <article><span>Best for</span><strong>{placeGuide.bestFor}</strong></article>
                   <article><span>Ideal stay</span><strong>{placeGuide.idealStay}</strong></article>
+                  <article><span>Best season</span><strong>{placeGuide.bestSeason}</strong></article>
                   <article><span>From Berlin</span><strong>{selectedDestination.time}</strong></article>
                 </div>
               </div>
 
               <div className="modal-highlights">
                 {placeGuide.highlights.map((highlight, index) => (
-                  <article key={highlight}>
+                  <a
+                    key={highlight.name}
+                    href={googleMapsSearchUrl(highlight.mapsQuery)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <span>{String(index + 1).padStart(2, "0")}</span>
-                    <p>{highlight}</p>
-                  </article>
+                    <div><strong>{highlight.name}</strong><p>{highlight.detail}</p><small>Open in Google Maps ↗</small></div>
+                  </a>
                 ))}
               </div>
 
@@ -676,14 +675,70 @@ export default function HomeClient() {
                   <div><strong>A useful local note</strong><p>{placeGuide.localTip}</p></div>
                 </div>
                 <div className="departure-controls">
-                  <label><span>From</span><input value={departure} onChange={(event) => setDeparture(event.target.value)} /></label>
-                  <label><span>Date</span><input type="date" value={travelDate} onChange={(event) => setTravelDate(event.target.value)} /></label>
+                  <label><span>From</span><select value={departure} onChange={(event) => setDeparture(event.target.value)}>{departureStations.map((station) => <option key={station.name}>{station.name}</option>)}</select></label>
+                  <label><span>Date</span><input type="date" min={todayISO()} value={travelDate} onChange={(event) => updateTravelDate(event.target.value)} /></label>
                   <label><span>Time</span><input type="time" value={travelTime} onChange={(event) => setTravelTime(event.target.value)} /></label>
                 </div>
-                <a className="db-button" href={dbUrl} target="_blank" rel="noreferrer">
-                  <span>DB</span> Check live journey on bahn.de <b>↗</b>
+                <a className="db-button" href={dbUrl} target="_blank" rel="noopener noreferrer">
+                  <span>DB</span> Live times: {departure} → {stationName(selectedDestination)} <b>↗</b>
                 </a>
                 <p className="route-disclaimer">This is a curated route preview. Confirm live services, platform changes, and ticket validity before travel.</p>
+              </div>
+
+              <div className="modal-explore-heading">
+                <div><p className="modal-kicker">Turn the idea into a day</p><h3>A ready-made plan for {selectedDestination.name}</h3></div>
+                <a href={activityUrl} target="_blank" rel="noopener noreferrer">Explore everything nearby ↗</a>
+              </div>
+
+              <div className="modal-explore-grid">
+                <section className="itinerary-panel" aria-labelledby="itinerary-heading">
+                  <h4 id="itinerary-heading">A simple day plan</h4>
+                  <ol>
+                    {placeGuide.itinerary.map((stop) => (
+                      <li key={`${stop.time}-${stop.title}`}>
+                        <span>{stop.time}</span>
+                        <div><strong>{stop.title}</strong><p>{stop.detail}</p></div>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+
+                <section className="nearby-panel" aria-labelledby="nearby-heading">
+                  <h4 id="nearby-heading">Worth adding nearby</h4>
+                  <div>
+                    {placeGuide.nearby.map((place) => (
+                      <a key={place.name} href={googleMapsSearchUrl(place.mapsQuery)} target="_blank" rel="noopener noreferrer">
+                        <span>Nearby</span><strong>{place.name}</strong><p>{place.detail}</p><small>Find on Google Maps ↗</small>
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="food-stay-grid">
+                <section className="food-panel">
+                  <p className="modal-kicker">Eat well when you arrive</p>
+                  <h3>Let the latest local ratings guide lunch.</h3>
+                  <p>Open a live Google Maps search centered on {selectedDestination.name}, then compare ratings, opening hours, and walking distance.</p>
+                  <a href={restaurantUrl} target="_blank" rel="noopener noreferrer">Find top-rated restaurants <span>↗</span></a>
+                </section>
+
+                <section className="stay-panel">
+                  <p className="modal-kicker">Stay the night</p>
+                  <h3>Turn the escape into a getaway.</h3>
+                  <div className="stay-controls">
+                    <label><span>Check in</span><input type="date" min={todayISO()} value={stayCheckIn} onChange={(event) => { setStayCheckIn(event.target.value); if (event.target.value >= stayCheckOut) setStayCheckOut(addDaysISO(event.target.value, 1)); }} /></label>
+                    <label><span>Check out</span><input type="date" min={addDaysISO(stayCheckIn, 1)} value={stayCheckOut} onChange={(event) => setStayCheckOut(event.target.value)} /></label>
+                    <label><span>Guests</span><select value={stayGuests} onChange={(event) => setStayGuests(event.target.value)}><option value="1">1 guest</option><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4 guests</option></select></label>
+                  </div>
+                  <a className="stay-button" href={bookingUrl} target="_blank" rel="noopener noreferrer">See available hotels & hostels <span>↗</span></a>
+                  <small>Availability, pricing, and booking are completed securely on Booking.com.</small>
+                </section>
+              </div>
+
+              <div className="practical-strip">
+                <article><span aria-hidden="true">◎</span><div><strong>Arriving and getting around</strong><p>{placeGuide.arrivalTip}</p></div></article>
+                <article><span aria-hidden="true">✦</span><div><strong>Local planning note</strong><p>{placeGuide.localTip}</p></div></article>
               </div>
             </div>
           </section>
