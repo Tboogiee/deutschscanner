@@ -104,7 +104,7 @@ export default function AccountPanel({
               </p>
               <div className="auth-preview-stats">
                 <article><strong>{account.favorites.length}</strong><span>saved on this device</span></article>
-                <article><strong>22</strong><span>places ready to unlock</span></article>
+                <article><strong>{destinations.length}</strong><span>places ready to unlock</span></article>
               </div>
             </div>
 

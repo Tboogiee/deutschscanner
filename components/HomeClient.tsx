@@ -56,6 +56,34 @@ const localImages: Record<string, string> = {
   rostock: "/destinations/rostock.jpg",
   warnemuende: "/destinations/rostock.jpg",
   schwerin: "/destinations/schwerin.jpg",
+  luckenwalde: "/destinations/luckenwalde.jpg",
+  "bad-freienwalde": "/destinations/bad-freienwalde.jpg",
+  "fuerstenberg-havel": "/destinations/fuerstenberg-havel.jpg",
+  rheinsberg: "/destinations/rheinsberg.jpg",
+  neuruppin: "/destinations/neuruppin.jpg",
+  magdeburg: "/destinations/magdeburg.jpg",
+  torgau: "/destinations/torgau.jpg",
+  radebeul: "/destinations/radebeul.jpg",
+  meissen: "/destinations/meissen.jpg",
+  pirna: "/destinations/pirna.jpg",
+  "koenigstein-saechsische-schweiz": "/destinations/koenigstein-saechsische-schweiz.jpg",
+  "bad-schandau": "/destinations/bad-schandau.jpg",
+  goerlitz: "/destinations/goerlitz.jpg",
+  zittau: "/destinations/zittau.jpg",
+  erfurt: "/destinations/erfurt.jpg",
+  weimar: "/destinations/weimar.jpg",
+  eisenach: "/destinations/eisenach.jpg",
+  hannover: "/destinations/hannover.jpg",
+  celle: "/destinations/celle.jpg",
+  goslar: "/destinations/goslar.jpg",
+  quedlinburg: "/destinations/quedlinburg.jpg",
+  wernigerode: "/destinations/wernigerode.jpg",
+  hamburg: "/destinations/hamburg.jpg",
+  luebeck: "/destinations/luebeck.jpg",
+  kiel: "/destinations/kiel.jpg",
+  flensburg: "/destinations/flensburg.jpg",
+  westerland: "/destinations/westerland.jpg",
+  bremen: "/destinations/bremen.jpg",
 };
 
 const categoryFallbacks: Record<string, string> = {
@@ -339,14 +367,14 @@ export default function HomeClient() {
             transport and your Deutschlandticket.
           </p>
           <div className="hero-actions">
-            <Link className="primary-button" href="#discover">Explore 22 escapes <span>→</span></Link>
+            <Link className="primary-button" href="#discover">Explore {destinations.length} escapes <span>→</span></Link>
             <button className="ghost-button" type="button" onClick={surpriseMe}>
               <span aria-hidden="true">✦</span> Surprise me
             </button>
           </div>
           <div className="trust-row" aria-label="Service highlights">
-            <span><strong>22</strong> curated places</span>
-            <span><strong>4h</strong> max from Berlin</span>
+            <span><strong>{destinations.length}</strong> curated places</span>
+            <span><strong>Live</strong> DB connections</span>
             <span><strong>€0</strong> extra train fare*</span>
           </div>
         </div>
